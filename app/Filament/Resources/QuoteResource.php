@@ -174,7 +174,11 @@ public static function updateTotals(Get $get, $livewire): void
             Tables\Actions\BulkActionGroup::make([
                 Tables\Actions\DeleteBulkAction::make(),
             ]),
-        ]);
+        ])
+
+            ->recordUrl(function ($record) {
+                return Pages\ViewQuote::getUrl([$record]);
+            });
     }
 
     public static function getRelations(): array
@@ -189,6 +193,7 @@ public static function updateTotals(Get $get, $livewire): void
         return [
             'index' => Pages\ListQuotes::route('/'),
             'create' => Pages\CreateQuote::route('/create'),
+            'view' => Pages\ViewQuote::route('/{record}'),
             'edit' => Pages\EditQuote::route('/{record}/edit'),
         ];
     }
