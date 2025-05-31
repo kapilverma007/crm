@@ -20,6 +20,11 @@ class ManageCustomerStages extends Page
     // Adding a Heroicon to the Navigation Link
     protected static ?string $navigationIcon = 'heroicon-s-queue-list';
 
+    public static function canAccess(): bool
+{
+    return auth()->user()->isAdmin();
+}
+
     // We will be listening for the `statusChangeEvent` event to update the record status
     #[On('statusChangeEvent')]
     public function changeRecordStatus($id, $pipeline_stage_id): void

@@ -20,7 +20,8 @@ class UserResource extends Resource
 {
     protected static ?string $model = User::class;
 
-      protected static ?string $navigationGroup = 'Settings';
+    protected static ?string $label="Employe";
+    protected static ?string $navigationGroup = 'Settings';
 
     public static function form(Form $form): Form
     {
@@ -33,11 +34,6 @@ class UserResource extends Resource
                     ->email()
                     ->required()
                     ->maxLength(255),
-           Select::make('role_id')
-    ->label('Role')
-    ->options(Role::all()->pluck('name', 'id')->toArray())
-    ->searchable()
-    ->required(),
                 // Forms\Components\DateTimePicker::make('email_verified_at'),
                 Forms\Components\TextInput::make('password')
                     ->password()
@@ -56,9 +52,6 @@ class UserResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('email')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('role.name')
-                    ->sortable(),
-
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

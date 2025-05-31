@@ -20,43 +20,45 @@ class ListCustomers extends ListRecords
         ];
     }
     public function getTabs(): array
-    {
-        $tabs = [];
+{
+    $tabs = [];
 
-        // Adding `all` as our first tab
+    // Check if user is admin
+    if (auth()->user()->isAdmin()) {
+        // Admin sees all tabs
+
+        // 'All Customers' tab
         $tabs['all'] = Tab::make('All Customers')
-            // We will add a badge to show how many customers are in this tab
             ->badge(Customer::count());
 
-         if (!auth()->user()->isAdmin()) {
-        $tabs['my'] = Tab::make('My Customers')
-            ->badge(Customer::where('employee_id', auth()->id())->count())
-            ->modifyQueryUsing(function ($query) {
-                return $query->where('employee_id', auth()->id());
-            });
-    }
-
-        // Load all Pipeline Stages
+        // All pipeline stages
         $pipelineStages = PipelineStage::orderBy('position')->withCount('customers')->get();
 
-        // Loop through each Pipeline Stage
         foreach ($pipelineStages as $pipelineStage) {
-            // Add a tab for each Pipeline Stage
-            // Array index is going to be used in the URL as a slug, so we transform the name into a slug
             $tabs[str($pipelineStage->name)->slug()->toString()] = Tab::make($pipelineStage->name)
-                // We will add a badge to show how many customers are in this tab
                 ->badge($pipelineStage->customers_count)
-                // We will modify the query to only show customers in this Pipeline Stage
                 ->modifyQueryUsing(function ($query) use ($pipelineStage) {
                     return $query->where('pipeline_stage_id', $pipelineStage->id);
                 });
         }
+
+        // Archived tab
         $tabs['archived'] = Tab::make('Archived')
             ->badge(Customer::onlyTrashed()->count())
             ->modifyQueryUsing(function ($query) {
                 return $query->onlyTrashed();
             });
 
-        return $tabs;
+    } else {
+        // Non-admin sees only their own customers
+
+        $tabs['my'] = Tab::make('Total Customers')
+            ->badge(Customer::where('employee_id', auth()->id())->count())
+            ->modifyQueryUsing(function ($query) {
+                return $query->where('employee_id', auth()->id());
+            });
     }
+
+    return $tabs;
+}
 }

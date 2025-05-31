@@ -9,6 +9,7 @@ use App\Models\CustomField;
 use App\Models\PipelineStage;
 use App\Models\Role;
 use App\Models\User;
+use App\Models\Task;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -17,11 +18,11 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Notifications\Notification;
-use Filament\Infolists\Infolist;
+use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\ViewEntry;
-use Filament\Infolists\Components\RepeatableEntry;
+use Filament\Infolists\Infolist;
 use Filament\Support\Colors\Color;
 use Illuminate\Support\Facades\Storage;
 use Filament\Forms\Get;
@@ -178,41 +179,14 @@ class CustomerResource extends Resource
                                 TextEntry::make('comments'),
                             ])
                             ->columns()
-                    ]),
-                Forms\Components\Section::make('Additional fields')
-                    ->schema([
-                        Forms\Components\Repeater::make('fields')
-                            ->hiddenLabel()
-                            ->relationship('customFields')
-                            ->schema([
-                                Forms\Components\Select::make('custom_field_id')
-                                    ->label('Field Type')
-                                    ->options(CustomField::pluck('name', 'id')->toArray())
-                                    // We will disable already selected fields
-                                    ->disableOptionWhen(function ($value, $state, Get $get) {
-                                        return collect($get('../*.custom_field_id'))
-                                            ->reject(fn($id) => $id === $state)
-                                            ->filter()
-                                            ->contains($value);
-                                    })
-                                    ->required()
-                                    // Adds search bar to select
-                                    ->searchable()
-                                    // Live is required to make sure that the options are updated
-                                    ->live(),
-                                Forms\Components\TextInput::make('value')
-                                    ->required()
-                            ])
-                            ->addActionLabel('Add another Field')
-                            ->columns(),
-                    ]),
-                Section::make('Pipeline Stage History and Notes')
-                    ->schema([
-                        ViewEntry::make('pipelineStageLogs')
-                            ->label('')
-                            ->view('infolists.components.pipeline-stage-history-list')
-                    ])
-                    ->collapsible(),
+                            ]),
+                                 Section::make('Pipeline Stage History and Notes')
+                ->schema([
+                    ViewEntry::make('pipelineStageLogs')
+                        ->label('')
+                        ->view('infolists.components.pipeline-stage-history-list')
+                ])
+                   ->collapsible(),
         Tabs::make('Tasks')
             ->tabs([
                 Tabs\Tab::make('Completed')
@@ -271,7 +245,7 @@ class CustomerResource extends Resource
                     ])
             ])
             ->columnSpanFull(),
-            ]);
+                        ]);
     }
 
     public static function table(Table $table): Table
@@ -283,6 +257,8 @@ class CustomerResource extends Resource
                 return $query->with('tags');
             })
             ->columns([
+                  Tables\Columns\TextColumn::make('employee.name')
+                ->hidden(!auth()->user()->isAdmin()),
                 Tables\Columns\TextColumn::make('first_name')
                     ->label('Name')
                     ->formatStateUsing(function ($record) {
@@ -343,17 +319,8 @@ class CustomerResource extends Resource
                             'pipeline_stage_id' => $data['pipeline_stage_id'],
                             'notes' => $data['notes'],
                             'user_id' => auth()->id()
-                        ])
-                            ->recordUrl(function ($record) {
-                                // If the record is trashed, return null
-                                if ($record->trashed()) {
-                                    // Null will disable the row click
-                                    return null;
-                                }
+                        ]);
 
-                                // Otherwise, return the edit page URL
-                                return Pages\ViewCustomer::getUrl([$record->id]);
-                            });
 
                         Notification::make()
                             ->title('Customer Pipeline Updated')
@@ -365,10 +332,15 @@ class CustomerResource extends Resource
             ->form([
                 Forms\Components\RichEditor::make('description')
                     ->required(),
-                Forms\Components\Select::make('user_id')
-                    ->preload()
-                    ->searchable()
-                    ->relationship('employee', 'name'),
+ auth()->user()->isAdmin()
+    ?  Forms\Components\Select::make('user_id')
+        ->label('Employee')
+        ->preload()
+        ->searchable()
+        ->relationship('employee', 'name')
+    :  Forms\Components\Hidden::make('user_id')
+        ->default(auth()->id()),
+ // non-admin cannot change
                 Forms\Components\DatePicker::make('due_date')
                     ->native(false),
 
@@ -387,7 +359,14 @@ class CustomerResource extends Resource
                       return CreateQuote::getUrl(['customer_id' => $record->id]);
                   })
                ])
-            ])
+            ])->recordUrl(function ($record) {
+            if ($record->trashed()) {
+                return null;
+            }
+
+            // return Pages\EditCustomer::getUrl([$record->id]);
+             return Pages\ViewCustomer::getUrl([$record->id]);
+        })
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make()
                     ->hidden(function (Pages\ListCustomers $livewire) {
