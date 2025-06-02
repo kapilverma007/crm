@@ -75,6 +75,7 @@ class ListCustomers extends ListRecords
             ->send();
     }
 }),
+
         ];
     }
     public function getTabs(): array
