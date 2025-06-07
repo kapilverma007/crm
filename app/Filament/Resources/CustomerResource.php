@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Imports\CustomerImporter;
 use App\Filament\Resources\CustomerResource\Pages;
 use App\Filament\Resources\CustomerResource\RelationManagers;
 use App\Models\Customer;
@@ -29,6 +30,7 @@ use Filament\Forms\Get;
 use Filament\Infolists\Components\Tabs;
 use Filament\Infolists\Components\Actions\Action;
 use App\Filament\Resources\QuoteResource\Pages\CreateQuote;
+use Filament\Tables\Actions\ImportAction;
 
 class CustomerResource extends Resource
 {
@@ -290,6 +292,10 @@ class CustomerResource extends Resource
             ->filters([
                 //
             ])
+       ->headerActions([
+            ImportAction::make()
+                ->importer(CustomerImporter::class)
+        ])
             ->actions([
                      Tables\Actions\ActionGroup::make([
                 Tables\Actions\EditAction::make()
@@ -345,6 +351,7 @@ class CustomerResource extends Resource
                     ->native(false),
 
             ])
+
             ->action(function (Customer $customer, array $data) {
                 $customer->tasks()->create($data);
 
@@ -353,7 +360,7 @@ class CustomerResource extends Resource
                     ->success()
                     ->send();
             }),
-               Tables\Actions\Action::make('Create Quote')
+               Tables\Actions\Action::make('Create Contract')
                   ->icon('heroicon-m-book-open')
                   ->url(function ($record) {
                       return CreateQuote::getUrl(['customer_id' => $record->id]);
@@ -377,6 +384,7 @@ class CustomerResource extends Resource
                         return $livewire->activeTab != 'archived';
                     }),
             ]);
+
     }
 
     public static function getRelations(): array
