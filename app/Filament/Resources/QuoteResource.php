@@ -18,6 +18,8 @@ use Filament\Forms\Get;
 use Filament\Forms\Set;
 use App\Models\Product;
 use Filament\Forms\Components\Actions\Action;
+use Filament\Infolists\Components\ViewEntry;
+use Filament\Infolists\Infolist;
 
 class QuoteResource extends Resource
 {
@@ -111,6 +113,19 @@ class QuoteResource extends Resource
                 ])
         ]);
 }
+public static function infolist(Infolist $infolist): Infolist
+{
+    return $infolist
+        ->schema([
+            ViewEntry::make('invoice')
+                ->columnSpanFull()
+                ->viewData([
+                    'record' => $infolist->record
+                ])
+                ->view('infolists.components.quote-invoice-view')
+        ]);
+}
+
 
 public static function updateTotals(Get $get, $livewire): void
 {
