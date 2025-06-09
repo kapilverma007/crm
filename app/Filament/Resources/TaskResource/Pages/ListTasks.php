@@ -20,32 +20,77 @@ class ListTasks extends ListRecords
         ];
     }
 
-    public function getTabs(): array
+//     public function getTabs(): array
+// {
+//     $tabs = [];
+
+//     if (!auth()->user()->isAdmin()) {
+//         $tabs[] = Tab::make('My Tasks')
+//             ->badge(Task::where('user_id', auth()->id())->count())
+//             ->modifyQueryUsing(function ($query) {
+//                 return $query->where('user_id', auth()->id());
+//             });
+//     }
+
+//     $tabs[] = Tab::make('All Tasks')
+//         ->badge(Task::count());
+
+//     $tabs[] = Tab::make('Completed Tasks')
+//         ->badge(Task::where('is_completed', true)->count())
+//         ->modifyQueryUsing(function ($query) {
+//             return $query->where('is_completed', true);
+//         });
+
+//     $tabs[] = Tab::make('Incomplete Tasks')
+//         ->badge(Task::where('is_completed', false)->count())
+//         ->modifyQueryUsing(function ($query) {
+//             return $query->where('is_completed', false);
+//         });
+
+//     return $tabs;
+// }
+public function getTabs(): array
 {
     $tabs = [];
 
-    if (!auth()->user()->isAdmin()) {
+    if (auth()->user()->isAdmin()) {
+        // Admin: Show all tasks
+        $tabs[] = Tab::make('All Tasks')
+            ->badge(Task::count());
+
+        $tabs[] = Tab::make('Completed Tasks')
+            ->badge(Task::where('is_completed', true)->count())
+            ->modifyQueryUsing(function ($query) {
+                return $query->where('is_completed', true);
+            });
+
+        $tabs[] = Tab::make('Incomplete Tasks')
+            ->badge(Task::where('is_completed', false)->count())
+            ->modifyQueryUsing(function ($query) {
+                return $query->where('is_completed', false);
+            });
+    } else {
+        // Non-admin: Show only their own tasks
         $tabs[] = Tab::make('My Tasks')
             ->badge(Task::where('user_id', auth()->id())->count())
             ->modifyQueryUsing(function ($query) {
                 return $query->where('user_id', auth()->id());
             });
+
+        $tabs[] = Tab::make('Completed Tasks')
+            ->badge(Task::where('user_id', auth()->id())->where('is_completed', true)->count())
+            ->modifyQueryUsing(function ($query) {
+                return $query->where('user_id', auth()->id())
+                             ->where('is_completed', true);
+            });
+
+        $tabs[] = Tab::make('Incomplete Tasks')
+            ->badge(Task::where('user_id', auth()->id())->where('is_completed', false)->count())
+            ->modifyQueryUsing(function ($query) {
+                return $query->where('user_id', auth()->id())
+                             ->where('is_completed', false);
+            });
     }
-
-    $tabs[] = Tab::make('All Tasks')
-        ->badge(Task::count());
-
-    $tabs[] = Tab::make('Completed Tasks')
-        ->badge(Task::where('is_completed', true)->count())
-        ->modifyQueryUsing(function ($query) {
-            return $query->where('is_completed', true);
-        });
-
-    $tabs[] = Tab::make('Incomplete Tasks')
-        ->badge(Task::where('is_completed', false)->count())
-        ->modifyQueryUsing(function ($query) {
-            return $query->where('is_completed', false);
-        });
 
     return $tabs;
 }

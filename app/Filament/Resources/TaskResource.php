@@ -34,7 +34,9 @@ class TaskResource extends Resource
         Forms\Components\Select::make('user_id')
             ->preload()
             ->searchable()
-            ->relationship('employee', 'name'),
+            ->relationship('employee', 'name')
+           ->hidden(fn () => !auth()->user()->isAdmin()),
+
         Forms\Components\RichEditor::make('description')
             ->required()
             ->maxLength(65535)
