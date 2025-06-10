@@ -26,7 +26,6 @@ class QuoteResource extends Resource
     protected static ?string $model = Quote::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-      protected static ?string $label="Contract";
 
    public static function form(Form $form): Form
 {

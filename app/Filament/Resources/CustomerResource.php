@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Imports\CustomerImporter;
+use App\Filament\Resources\ContractResource\Pages\CreateContract;
 use App\Filament\Resources\CustomerResource\Pages;
 use App\Filament\Resources\CustomerResource\RelationManagers;
 use App\Models\Customer;
@@ -88,6 +89,22 @@ class CustomerResource extends Resource
                             ->hiddenLabel()
                             ->reorderable(false)
                             ->addActionLabel('Add Document')
+                            ->schema([
+                                Forms\Components\FileUpload::make('file_path')
+                                    ->required(),
+                                Forms\Components\Textarea::make('comments'),
+                            ])
+                            ->columns()
+                            ]),
+                               Forms\Components\Section::make('Contracts')
+                    // This will make the section visible only on the edit page
+                    ->visibleOn('edit')
+                    ->schema([
+                        Forms\Components\Repeater::make('contracts')
+                            ->relationship('contracts')
+                            ->hiddenLabel()
+                            ->reorderable(false)
+                            ->addActionLabel('Add Contract')
                             ->schema([
                                 Forms\Components\FileUpload::make('file_path')
                                     ->required(),
@@ -182,7 +199,27 @@ class CustomerResource extends Resource
                             ])
                             ->columns()
                             ]),
-                                 Section::make('Pipeline Stage History and Notes')
+                              Section::make('Contract')
+                    // This will hide the section if there are no documents
+                    ->hidden(fn($record) => $record->contracts->isEmpty())
+                    ->schema([
+                        RepeatableEntry::make('contracts')
+                            ->hiddenLabel()
+                            ->schema([
+                                TextEntry::make('file_path')
+                                    ->label('Contract')
+                                    // This will rename the column to "Download Document" (otherwise, it's just the file name)
+                                    ->formatStateUsing(fn() => "Download Contract")
+                                    // URL to be used for the download (link), and the second parameter is for the new tab
+                                    ->url(fn($record) => Storage::url($record->file_path), true)
+                                    // This will make the link look like a "badge" (blue)
+                                    ->badge()
+                                    ->color(Color::Blue),
+                                  TextEntry::make('comments'),
+                            ])
+                            ->columns()
+                            ]),
+                        Section::make('Pipeline Stage History and Notes')
                 ->schema([
                     ViewEntry::make('pipelineStageLogs')
                         ->label('')
@@ -360,10 +397,15 @@ class CustomerResource extends Resource
                     ->success()
                     ->send();
             }),
-               Tables\Actions\Action::make('Create Contract')
+               Tables\Actions\Action::make('Create Quote')
                   ->icon('heroicon-m-book-open')
                   ->url(function ($record) {
                       return CreateQuote::getUrl(['customer_id' => $record->id]);
+                  }),
+                     Tables\Actions\Action::make('Create Contract')
+                  ->icon('heroicon-m-book-open')
+                  ->url(function ($record) {
+                      return CreateContract::getUrl(['customer_id' => $record->id]);
                   })
                ])
             ])->recordUrl(function ($record) {

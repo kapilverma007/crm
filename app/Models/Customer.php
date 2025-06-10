@@ -69,6 +69,10 @@ class Customer extends Model
     {
         return $this->hasMany(Document::class);
     }
+      public function contracts(): HasMany
+    {
+        return $this->hasMany(Contract::class);
+    }
     public function customFields(): HasMany
     {
         return $this->hasMany(CustomFieldCustomer::class);
