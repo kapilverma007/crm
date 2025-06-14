@@ -5,10 +5,15 @@
                 @foreach($statuses as $status)
                     <div class="h-full flex-1">
                         <div class="bg-primary-200 rounded px-2 flex flex-col h-full" id="{{ $status['id'] }}">
-                            <div class="p-2 text-sm text-gray-900">
+                            <div class="flex items-center justify-between text-base font-semibold text-primary-800 border-b border-primary-300 pb-2 px-3 pt-3">
                                 {{ $status['title'] }}
+                                      <span
+                                class="text-xs font-medium text-primary-600 bg-primary-50 rounded-full px-2 py-0.5"
+                            >
+                                {{ count($status['records']) }}
+                            </span>
                             </div>
-                            <div
+                            {{-- <div
                                     id="{{ $status['kanbanRecordsId'] }}"
                                     data-status-id="{{ $status['id'] }}"
                                     class="space-y-2 p-2 flex-1 overflow-y-auto">
@@ -24,7 +29,24 @@
 
                                     </div>
                                 @endforeach
-                            </div>
+                            </div> --}}
+                                        <div
+                            class="flex-1 space-y-3 overflow-y-auto px-3 py-2"
+                            id="{{ $status['kanbanRecordsId'] }}"
+                            data-status-id="{{ $status['id'] }}"
+                        >
+                            @foreach ($status['records'] as $record)
+                                <div
+                                    id="{{ $record['id'] }}"
+                                    class="bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition cursor-move"
+                                >
+                                    <p class="text-sm font-medium text-gray-800 dark:text-gray-100">
+                                        {{ $record['title'] }}
+                                    </p>
+                                </div>
+                            @endforeach
+                        </div>
+
                         </div>
                     </div>
                 @endforeach
