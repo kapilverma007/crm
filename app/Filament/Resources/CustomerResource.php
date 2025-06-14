@@ -52,15 +52,15 @@ class CustomerResource extends Resource
                 ->hidden(!auth()->user()->isAdmin()),
                 Forms\Components\Section::make('Customer Details')
                     ->schema([
-                        Forms\Components\TextInput::make('first_name')
-                            ->maxLength(255),
-                        Forms\Components\TextInput::make('last_name')
-                            ->maxLength(255),
+                        Forms\Components\TextInput::make('full_name')
+                            ->maxLength(255)->required(),
+                        Forms\Components\TextInput::make('city')
+                            ->maxLength(255)->required(),
                         Forms\Components\TextInput::make('email')
                             ->email()
-                            ->maxLength(255),
+                            ->maxLength(255)->required(),
                         Forms\Components\TextInput::make('phone_number')
-                            ->maxLength(255),
+                            ->maxLength(255)->required(),
                         Forms\Components\Textarea::make('description')
                             ->maxLength(65535)
                             ->columnSpanFull(),
@@ -72,7 +72,7 @@ class CustomerResource extends Resource
                             ->relationship('leadSource', 'name'),
                         Forms\Components\Select::make('tags')
                             ->relationship('tags', 'name')
-                            ->multiple(),
+                            ,
                         Forms\Components\Select::make('pipeline_stage_id')
                             ->relationship('pipelineStage', 'name', function ($query) {
                                 $query->orderBy('position', 'asc');
@@ -148,8 +148,8 @@ class CustomerResource extends Resource
             ->schema([
                 Section::make('Personal Information')
                     ->schema([
-                        TextEntry::make('first_name'),
-                        TextEntry::make('last_name'),
+                        TextEntry::make('full_name'),
+                        TextEntry::make('city'),
                     ])
                     ->columns(),
                 Section::make('Contact Information')
@@ -298,33 +298,34 @@ class CustomerResource extends Resource
             ->columns([
                   Tables\Columns\TextColumn::make('employee.name')
                 ->hidden(!auth()->user()->isAdmin()),
-                Tables\Columns\TextColumn::make('first_name')
-                    ->label('Name')
+                Tables\Columns\TextColumn::make('full_name')
                     ->formatStateUsing(function ($record) {
                         $tagsList = view('customer.tagsList', ['tags' => $record->tags])->render();
 
-                        return $record->first_name . ' ' . $record->last_name . ' ' . $tagsList;
+                        return $record->full_name .  ' ' . $tagsList;
                     })
                     ->html()
-                    ->searchable(['first_name', 'last_name']),
+                    ->searchable(['full_name']),
                 Tables\Columns\TextColumn::make('email')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('phone_number')
+                    ->searchable(),
+                      Tables\Columns\TextColumn::make('city')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('leadSource.name'),
                 Tables\Columns\TextColumn::make('pipelineStage.name'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('deleted_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                  ,
+                // Tables\Columns\TextColumn::make('updated_at')
+                //     ->dateTime()
+                //     ->sortable()
+                //     ->toggleable(isToggledHiddenByDefault: true),
+                // Tables\Columns\TextColumn::make('deleted_at')
+                //     ->dateTime()
+                //     ->sortable()
+                //     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 //
@@ -425,7 +426,7 @@ class CustomerResource extends Resource
                     ->hidden(function (Pages\ListCustomers $livewire) {
                         return $livewire->activeTab != 'archived';
                     }),
-            ]);
+            ])->defaultSort('id', 'desc');
 
     }
 

@@ -42,7 +42,7 @@ class ManageCustomerStages extends Page
         ]);
 
         // Inform the user that the status has been updated
-        $customerName = $customer->first_name . ' ' . $customer->last_name;
+        $customerName = $customer->full_name;
 
         Notification::make()
             ->title($customerName . ' Pipeline Stage Updated')
@@ -99,7 +99,7 @@ class ManageCustomerStages extends Page
             ->map(function (Customer $item) {
                 return [
                     'id' => $item->id,
-                    'title' => $item->first_name . ' ' . $item->last_name,
+                    'title' => $item->full_name,
                     'status' => $item->pipeline_stage_id,
                 ];
             });

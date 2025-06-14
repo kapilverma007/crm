@@ -14,7 +14,7 @@ class QuotePdfController extends Controller
         $quote->load(['quoteProducts.product', 'customer']);
 
         $customer = new Buyer([
-            'name' => $quote->customer->first_name . ' ' . $quote->customer->last_name,
+            'name' => $quote->customer->full_name,
             'custom_fields' => [
                 'email' => $quote->customer->email,
             ],

@@ -29,8 +29,8 @@ class ContractResource extends Resource
                Forms\Components\Select::make('customer_id')
                 ->searchable()
                 ->relationship('customer')
-                ->getOptionLabelFromRecordUsing(fn(Customer $record) => $record->first_name . ' ' . $record->last_name)
-                ->searchable(['first_name', 'last_name'])
+                ->getOptionLabelFromRecordUsing(fn(Customer $record) => $record->full_name)
+                ->searchable(['full_name'])
                 ->default(request()->has('customer_id') ? request()->get('customer_id') : null)
                 ->required(),
                      Forms\Components\Section::make('Contract')
@@ -45,12 +45,12 @@ class ContractResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('customer.first_name')
+                Tables\Columns\TextColumn::make('customer.full_name')
                     ->sortable()
                       ->formatStateUsing(function ($record) {
-                        return $record->customer->first_name . ' ' . $record->customer->last_name;
+                        return $record->customer->full_name;
                     })
-                    ->searchable(['first_name', 'last_name'])->label('Customer Name'),
+                    ->searchable(['full_name'])->label('Customer Name'),
                        Tables\Columns\TextColumn::make('customer.email')->searchable()->label('Customer Email'),
                 Tables\Columns\TextColumn::make('file_path')
                 ->label('Contract')

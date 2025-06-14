@@ -34,8 +34,8 @@ class QuoteResource extends Resource
             Forms\Components\Select::make('customer_id')
                 ->searchable()
                 ->relationship('customer')
-                ->getOptionLabelFromRecordUsing(fn(Customer $record) => $record->first_name . ' ' . $record->last_name)
-                ->searchable(['first_name', 'last_name'])
+                ->getOptionLabelFromRecordUsing(fn(Customer $record) => $record->full_name)
+                ->searchable(['full_name'])
                 ->default(request()->has('customer_id') ? request()->get('customer_id') : null)
                 ->required(),
             Section::make()
@@ -152,11 +152,11 @@ public static function updateTotals(Get $get, $livewire): void
     {
         return $table
         ->columns([
-            Tables\Columns\TextColumn::make('customer.first_name')
+            Tables\Columns\TextColumn::make('customer.full_name')
                 ->formatStateUsing(function ($record) {
-                    return $record->customer->first_name . ' ' . $record->customer->last_name;
+                    return $record->customer->full_name;
                 })
-                ->searchable(['first_name', 'last_name'])
+                ->searchable(['full_name'])
                 ->sortable(),
             Tables\Columns\TextColumn::make('taxes')
                 ->numeric()

@@ -22,7 +22,9 @@ class Customer extends Model
         'description',
         'lead_source_id',
         'pipeline_stage_id',
-        'employee_id'
+        'employee_id',
+        'city',
+        'full_name',
     ];
     public function leadSource(): BelongsTo
     {

@@ -28,8 +28,8 @@ class TaskResource extends Resource
         Forms\Components\Select::make('customer_id')
             ->searchable()
             ->relationship('customer')
-            ->getOptionLabelFromRecordUsing(fn(Customer $record) => $record->first_name . ' ' . $record->last_name)
-            ->searchable(['first_name', 'last_name'])
+            ->getOptionLabelFromRecordUsing(fn(Customer $record) => $record->full_name )
+            ->searchable(['full_name'])
             ->required(),
         Forms\Components\Select::make('user_id')
             ->preload()
@@ -51,11 +51,11 @@ class TaskResource extends Resource
     {
         return $table
          ->columns([
-        Tables\Columns\TextColumn::make('customer.first_name')
+        Tables\Columns\TextColumn::make('customer.full_name')
             ->formatStateUsing(function ($record) {
-                return $record->customer->first_name . ' ' . $record->customer->last_name;
+                return $record->customer->full_name;
             })
-            ->searchable(['first_name', 'last_name'])
+            ->searchable(['full_name'])
             ->sortable(),
         Tables\Columns\TextColumn::make('employee.name')
             ->label('Employee')
