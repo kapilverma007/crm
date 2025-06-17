@@ -407,7 +407,40 @@ class CustomerResource extends Resource
                   ->icon('heroicon-m-book-open')
                   ->url(function ($record) {
                       return CreateContract::getUrl(['customer_id' => $record->id]);
-                  })
+                  }),
+  Tables\Actions\Action::make('Download Contract')
+                        ->icon('heroicon-m-book-open')
+                        ->url(fn($record) => route('contracts.generate', $record->id))
+                        ->openUrlInNewTab(),
+                    Tables\Actions\Action::make('Download Contract lattest')
+                        ->icon('heroicon-m-book-open')
+                        ->action(function ($record) {
+                            // Call the same logic as generate()
+                            $user = $record;
+
+                            $templatePath = storage_path('app/template/contract.docx');
+                            $fileName = 'contract_user_' . \Illuminate\Support\Str::slug($user->full_name) . '_' . $user->id . '.docx';
+                            $outputDocxPath = storage_path("app/contracts/{$fileName}");
+
+                            // Ensure directory exists
+                            \Illuminate\Support\Facades\Storage::makeDirectory('contracts');
+
+                            // Fill Word template
+                            $template = new \PhpOffice\PhpWord\TemplateProcessor($templatePath);
+                            $template->setValue('full_name', $user->full_name);
+                            $template->setValue('email', $user->email);
+                            $template->setValue('city', $user->city);
+                            $template->setValue('phone_number', $user->phone_number);
+
+                            $template->saveAs($outputDocxPath);
+
+                            // Optional: flash notification or log
+                            Notification::make()
+                                ->title('Contract created successfully')
+                                ->success()
+                                ->send();
+                        })
+
                ])
             ])->recordUrl(function ($record) {
             if ($record->trashed()) {
