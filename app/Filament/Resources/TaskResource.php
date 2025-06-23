@@ -14,6 +14,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Notifications\Notification;
+use Filament\Forms\Components\DateTimePicker;
 
 class TaskResource extends Resource
 {
@@ -41,7 +42,13 @@ class TaskResource extends Resource
             ->required()
             ->maxLength(65535)
             ->columnSpanFull(),
-        Forms\Components\DatePicker::make('due_date'),
+        // Forms\Components\DateTimePicker::make('due_date'),
+        DateTimePicker::make('due_date')
+    ->label('Due Date & Time')
+    ->required()
+    ->seconds(false) // Set to true if you want seconds as well
+    ->displayFormat('d M Y h:i A') // For user-friendly display
+    ->timezone('Asia/Kolkata'), // Optional: set to your desired timezone
         Forms\Components\Toggle::make('is_completed')
             ->required(),
     ]);
@@ -64,7 +71,7 @@ class TaskResource extends Resource
         Tables\Columns\TextColumn::make('description')
             ->html(),
         Tables\Columns\TextColumn::make('due_date')
-            ->date()
+             ->dateTime('d M Y h:i A')
             ->sortable(),
         Tables\Columns\IconColumn::make('is_completed')
             ->boolean(),

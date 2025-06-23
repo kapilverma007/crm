@@ -12,6 +12,7 @@ use App\Models\PipelineStage;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\Task;
+use App\Models\Contract;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -32,6 +33,7 @@ use Filament\Infolists\Components\Tabs;
 use Filament\Infolists\Components\Actions\Action;
 use App\Filament\Resources\QuoteResource\Pages\CreateQuote;
 use Filament\Tables\Actions\ImportAction;
+
 
 class CustomerResource extends Resource
 {
@@ -403,24 +405,21 @@ class CustomerResource extends Resource
                   ->url(function ($record) {
                       return CreateQuote::getUrl(['customer_id' => $record->id]);
                   }),
-                     Tables\Actions\Action::make('Create Contract')
-                  ->icon('heroicon-m-book-open')
-                  ->url(function ($record) {
-                      return CreateContract::getUrl(['customer_id' => $record->id]);
-                  }),
-  Tables\Actions\Action::make('Download Contract')
-                        ->icon('heroicon-m-book-open')
-                        ->url(fn($record) => route('contracts.generate', $record->id))
-                        ->openUrlInNewTab(),
-                    Tables\Actions\Action::make('Download Contract lattest')
+                                Tables\Actions\Action::make('Download Contract')
+                    ->icon('heroicon-m-book-open')
+                    ->url(fn ($record) => Storage::url($record->contracts?->file_path), true)
+                    ->visible(function ($record) {
+                        return Contract::where('customer_id',$record->id)->exists();
+                    }),
+                    Tables\Actions\Action::make('Create Contract')
                         ->icon('heroicon-m-book-open')
                         ->action(function ($record) {
                             // Call the same logic as generate()
                             $user = $record;
 
                             $templatePath = storage_path('app/template/contract.docx');
-                            $fileName = 'contract_user_' . \Illuminate\Support\Str::slug($user->full_name) . '_' . $user->id . '.docx';
-                            $outputDocxPath = storage_path("app/contracts/{$fileName}");
+                            $fileName = 'contract_user_' . \Illuminate\Support\Str::slug($user->full_name) . '_' . $user->id .'_'.now()->format('Ymd_His').'.docx';
+                            $outputDocxPath = storage_path("app/public/contracts/{$fileName}");
 
                             // Ensure directory exists
                             \Illuminate\Support\Facades\Storage::makeDirectory('contracts');
@@ -433,13 +432,19 @@ class CustomerResource extends Resource
                             $template->setValue('phone_number', $user->phone_number);
 
                             $template->saveAs($outputDocxPath);
+                            Contract::updateOrCreate(['customer_id'=>$user->id],[
+                                'file_path'=>'contracts/'.$fileName,
+                                'employee_id'=>auth()->id(),
+                            ]);
 
                             // Optional: flash notification or log
                             Notification::make()
                                 ->title('Contract created successfully')
                                 ->success()
                                 ->send();
-                        })
+                        })->visible(function ($record){
+                              return !Contract::where('customer_id',$record->id)->exists();
+                        }),
 
                ])
             ])->recordUrl(function ($record) {

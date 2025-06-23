@@ -71,9 +71,9 @@ class Customer extends Model
     {
         return $this->hasMany(Document::class);
     }
-      public function contracts(): HasMany
+      public function contracts()
     {
-        return $this->hasMany(Contract::class);
+        return $this->hasOne(Contract::class);
     }
     public function customFields(): HasMany
     {
