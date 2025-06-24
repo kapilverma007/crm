@@ -201,26 +201,18 @@ class CustomerResource extends Resource
                             ])
                             ->columns()
                             ]),
-                              Section::make('Contract')
-                    // This will hide the section if there are no documents
-                    ->hidden(fn($record) => $record->contracts->isEmpty())
-                    ->schema([
-                        RepeatableEntry::make('contracts')
-                            ->hiddenLabel()
-                            ->schema([
-                                TextEntry::make('file_path')
-                                    ->label('Contract')
-                                    // This will rename the column to "Download Document" (otherwise, it's just the file name)
-                                    ->formatStateUsing(fn() => "Download Contract")
-                                    // URL to be used for the download (link), and the second parameter is for the new tab
-                                    ->url(fn($record) => Storage::url($record->file_path), true)
-                                    // This will make the link look like a "badge" (blue)
-                                    ->badge()
-                                    ->color(Color::Blue),
-                                  TextEntry::make('comments'),
-                            ])
-                            ->columns()
-                            ]),
+Section::make('Contract')
+    ->hidden(fn($record) => blank($record->contracts))
+    ->schema([
+        TextEntry::make('contracts.file_path')
+            ->label('Contract')
+            ->formatStateUsing(fn($state) => "Download Contract")
+            ->url(fn($record) => Storage::url($record->contracts->file_path ?? ''), true)
+            ->badge()
+            ->color(Color::Blue),
+        TextEntry::make('contracts.comments')->label('Comments')
+    ]),
+
                         Section::make('Pipeline Stage History and Notes')
                 ->schema([
                     ViewEntry::make('pipelineStageLogs')
