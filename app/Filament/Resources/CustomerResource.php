@@ -201,18 +201,26 @@ class CustomerResource extends Resource
                             ])
                             ->columns()
                             ]),
-Section::make('Contract')
-    ->hidden(fn($record) => blank($record->contracts))
-    ->schema([
-        TextEntry::make('contracts.file_path')
-            ->label('Contract')
-            ->formatStateUsing(fn($state) => "Download Contract")
-            ->url(fn($record) => Storage::url($record->contracts->file_path ?? ''), true)
-            ->badge()
-            ->color(Color::Blue),
-        TextEntry::make('contracts.comments')->label('Comments')
-    ]),
-
+                              Section::make('Contract')
+                    // This will hide the section if there are no documents
+                    ->hidden(fn($record) => !$record->contract)
+                    ->schema([
+                        RepeatableEntry::make('contracts')
+                            ->hiddenLabel()
+                            ->schema([
+                                TextEntry::make('file_path')
+                                    ->label('Contract')
+                                    // This will rename the column to "Download Document" (otherwise, it's just the file name)
+                                    ->formatStateUsing(fn() => "Download Contract")
+                                    // URL to be used for the download (link), and the second parameter is for the new tab
+                                    ->url(fn($record) => Storage::url($record->file_path), true)
+                                    // This will make the link look like a "badge" (blue)
+                                    ->badge()
+                                    ->color(Color::Blue),
+                                  TextEntry::make('comments'),
+                            ])
+                            ->columns()
+                            ]),
                         Section::make('Pipeline Stage History and Notes')
                 ->schema([
                     ViewEntry::make('pipelineStageLogs')
@@ -406,12 +414,33 @@ Section::make('Contract')
                     Tables\Actions\Action::make('Create Contract')
                         ->icon('heroicon-m-book-open')
                         ->action(function ($record) {
+                            $fieldMap = $record->getCustomFieldMap();
+
+$address = $fieldMap['Address'] ?? null;
+$city = $fieldMap['Country_To_Apply'] ?? null;
+$Registration = $fieldMap['Registration'] ?? null;
+$On_Receiving_job_Offer_Letter_Amount = $fieldMap['On_Receiving_job_Offer_Letter_Amount'] ?? null;
+$On_Receiving_Work_Permit_Amount = $fieldMap['On_Receiving_Work_Permit_Amount'] ?? null;
+$On_Receiving_Embassy_Appointment = $fieldMap['On_Receiving_Embassy_Appointment'] ?? null;
+$After_Visa_Amount = $fieldMap['After_Visa_Amount'] ?? null;
+$Contract_Amount = $fieldMap['Contract_Amount'] ?? null;
+
+                        //   $address = $record->getCustomFieldValue('Address');
+                        //      $city = $record->getCustomFieldValue('Country_To_Apply');
+                        //          $Registration = $record->getCustomFieldValue('Registration');
+                        //       $On_Receiving_job_Offer_Letter_Amount = $record->getCustomFieldValue('On_Receiving_job_Offer_Letter_Amount');
+                        //          $On_Receiving_Work_Permit_Amount = $record->getCustomFieldValue('On_Receiving_Work_Permit_Amount');
+                        //           $On_Receiving_Embassy_Appointment = $record->getCustomFieldValue('On_Receiving_Embassy_Appointment');
+                        //              $After_Visa_Amount  = $record->getCustomFieldValue('After_Visa_Amount ');
+                        //               $Contract_Amount  = $record->getCustomFieldValue('Contract_Amount');
+                                       $date=now()->format('d-m-Y');
                             // Call the same logic as generate()
                             $user = $record;
 
                             $templatePath = storage_path('app/template/contract.docx');
                             $fileName = 'contract_user_' . \Illuminate\Support\Str::slug($user->full_name) . '_' . $user->id .'_'.now()->format('Ymd_His').'.docx';
-                            $outputDocxPath = storage_path("app/public/contracts/{$fileName}");
+
+                           $outputDocxPath = storage_path("app/public/contracts/{$fileName}");
 
                             // Ensure directory exists
                             \Illuminate\Support\Facades\Storage::makeDirectory('contracts');
@@ -420,8 +449,36 @@ Section::make('Contract')
                             $template = new \PhpOffice\PhpWord\TemplateProcessor($templatePath);
                             $template->setValue('full_name', $user->full_name);
                             $template->setValue('email', $user->email);
-                            $template->setValue('city', $user->city);
+
                             $template->setValue('phone_number', $user->phone_number);
+                            $template->setValue('Address',$address);
+
+
+                                  $template->setValue('city', $city);
+
+
+                                  $template->setValue('Registration',  $Registration);
+
+
+                                  $template->setValue('On_Receiving_job_Offer_Letter_Amount',  $On_Receiving_job_Offer_Letter_Amount);
+
+
+                                  $template->setValue('On_Receiving_Work_Permit_Amount',  $On_Receiving_Work_Permit_Amount);
+
+
+                                  $template->setValue('On_Receiving_Embassy_Appointment',  $On_Receiving_Embassy_Appointment);
+
+
+                                  $template->setValue('After_Visa_Amount',  $After_Visa_Amount);
+
+
+                                  $template->setValue('Contract_Amount',$Contract_Amount);
+
+
+                                  $template->setValue('date',    $date);
+
+
+
 
                             $template->saveAs($outputDocxPath);
                             Contract::updateOrCreate(['customer_id'=>$user->id],[
@@ -476,4 +533,6 @@ Section::make('Contract')
             'view' => Pages\ViewCustomer::route('/{record}'),
         ];
     }
+
+
 }

@@ -15,6 +15,9 @@ class QuotePdfController extends Controller
 
         $customer = new Buyer([
             'name' => $quote->customer->full_name,
+            'contact'=>$quote->customer->phone_number,
+            'inv_no'=>$quote->created_at->format('Y/m'),
+            'email'=>$quote->customer->email,
             'custom_fields' => [
                 'email' => $quote->customer->email,
             ],
@@ -31,16 +34,17 @@ class QuotePdfController extends Controller
         }
 
         $invoice = Invoice::make()
+        ->template('invoice')
+
             ->sequence($quote->id)
             ->buyer($customer)
             ->taxRate($quote->taxes)
             ->totalAmount($quote->total)
-            ->addItems($items);
+            ->addItems($items)
 
-        if ($request->has('preview')) {
-            return $invoice->stream();
-        }
+            ->logo(public_path('vendor/invoices/logo.png'));
 
-        return $invoice->download();
+
+   return $request->has('preview') ? $invoice->stream() : $invoice->download();
     }
 }

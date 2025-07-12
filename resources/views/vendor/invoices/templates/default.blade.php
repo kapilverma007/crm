@@ -134,6 +134,7 @@
             <img src="{{ $invoice->getLogo() }}" alt="logo" height="100">
         @endif
 
+
         <table class="table mt-5">
             <tbody>
                 <tr>
@@ -367,6 +368,8 @@
         <p>
             {{ __('invoices::invoice.amount_in_words') }}: {{ $invoice->getTotalAmountInWords() }}
         </p>
+        <p>
+Please note that this invoice is non-refundable. In accordance with embassy guidelines, any refunds for an invalid work permit will be processed as directed by the embassy.</p>
         {{-- <p>
             {{ __('invoices::invoice.pay_until') }}: {{ $invoice->getPayUntilDate() }}
         </p> --}}

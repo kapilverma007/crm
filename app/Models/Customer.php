@@ -97,4 +97,13 @@ public function incompleteTasks(): HasMany
 {
     return $this->hasMany(Task::class)->where('is_completed', false);
 }
+public function getCustomFieldMap(): array
+{
+    return $this->customFields
+        ->filter(fn ($cf) => $cf->customField) // skip nulls
+        ->mapWithKeys(fn ($cf) => [
+            $cf->customField->name => $cf->value
+        ])
+        ->toArray();
+}
 }
