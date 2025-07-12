@@ -10,7 +10,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Quote extends Model
 {
-    protected $fillable = ['customer_id', 'taxes'];
+    protected $fillable = ['customer_id', 'taxes','payments'];
+    protected $casts = [
+    'payments' => 'array',
+];
 
     public function customer(): BelongsTo
     {

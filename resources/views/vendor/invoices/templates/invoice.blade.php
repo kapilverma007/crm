@@ -115,9 +115,8 @@
       <table class="no-border">
         <tr>
           <td style="padding: 6px 12px;"><span class="bold">Invoice No:</span><br />INV/{{$invoice->buyer->inv_no}}</td>
-          <td style="padding: 6px 12px;"><span class="bold">Invoice Date:</span><br />21/01/2024</td>
-          <td style="padding: 6px 12px;"><span class="bold">Due Date:</span><br />Work Permit</td>
-          <td style="padding: 6px 12px;"><span class="bold">Contract:</span><br />FC06</td>
+          <td style="padding: 6px 12px;"><span class="bold">Invoice Date:</span><br />{{$invoice->buyer->invoice_date}}</td>
+          <td style="padding: 6px 12px;"><span class="bold">Contract:</span><br />FC{{$invoice->buyer->contract_no}}</td>
         </tr>
       </table>
     </div>
@@ -136,8 +135,8 @@
               <td class="bold text-right">Total Price</td>
             </tr>
             <tr>
-              <td>1,500.00</td>
-              <td class="text-right">8,500.00 SR</td>
+              <td>{{$invoice->buyer->tax}}</td>
+              <td class="text-right">{{$invoice->buyer->contract_amount}} SR</td>
             </tr>
           </table>
         </td>
@@ -152,23 +151,22 @@
           <table class="no-border" style="width: 100%;">
             <tr>
               <td colspan="2" class="bold">Subtotal:</td>
-              <td colspan="2" class="text-right">8,500.00 SR</td>
+              <td colspan="2" class="text-right">{{$invoice->buyer->contract_amount}} SR</td>
             </tr>
             <tr>
               <td colspan="2" class="bold" style="padding-top: 24px; padding-bottom: 12px;">Total:</td>
-              <td colspan="2" class="text-right" style="padding-top: 24px; padding-bottom: 12px;">1,500.00 SR</td>
+              <td colspan="2" class="text-right" style="padding-top: 24px; padding-bottom: 12px;">{{$invoice->buyer->contract_amount-$invoice->buyer->totalAmount}} SR</td>
             </tr>
-            <tr><td colspan="2"><em>Paid on 17/09/2024</em></td><td colspan="2" class="text-right">1,000.00 SR</td></tr>
-            <tr><td colspan="2"><em>Paid on 06/10/2024</em></td><td colspan="2" class="text-right">2,500.00 SR</td></tr>
-            <tr><td colspan="2"><em>Paid on 05/11/2024</em></td><td colspan="2" class="text-right">2,000.00 SR</td></tr>
-            <tr><td colspan="2"><em>Paid on 21/01/2024</em></td><td colspan="2" class="text-right">1,500.00 SR</td></tr>
+            @foreach ($invoice->buyer->payments as $payment )
+ <tr><td colspan="2"><em>Paid on {{ date('d/m/Y', strtotime($payment['date'])) }}</em></td><td colspan="2" class="text-right">{{$payment['amount']}} SR</td></tr>
+            @endforeach
             <tr>
               <td colspan="2" style="padding-top: 24px;">Balance on Work Permit</td>
-              <td colspan="2" class="text-right" style="padding-top: 24px;">1,500.00 SR</td>
+              <td colspan="2" class="text-right" style="padding-top: 24px;">{{$invoice->buyer->contract_amount-$invoice->buyer->totalAmount}} SR</td>
             </tr>
             <tr style="border-top: 1px solid #000;">
               <td colspan="2" class="bold" style="padding: 10px 0;">Amount Due</td>
-              <td colspan="2" class="text-right bold" style="padding: 10px 0;">1,500.00 SR</td>
+              <td colspan="2" class="text-right bold" style="padding: 10px 0;">{{$invoice->buyer->contract_amount-$invoice->buyer->totalAmount}} SR</td>
             </tr>
           </table>
         </td>
@@ -181,7 +179,14 @@
         <td style="padding-top: 20px;">
           <p style="font-size: 14px;">
             Please note that this invoice is non-refundable. In accordance with embassy guidelines, any refunds for an invalid work permit will be processed as directed by the embassy.
+
           </p>
+    <ul>
+        <li>Falcon International is responsible to issue work permits only.</li>
+        <li>The Embassy is responsible for all further processes related to appointments and visas.</li>
+        <li>The Client is Eligible to apply for a full refund only in the case of not obtaining a work permit from Falcon
+International.</li>
+    </ul>
         </td>
       </tr>
     </table>

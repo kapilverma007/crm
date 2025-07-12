@@ -24,6 +24,7 @@ class Customer extends Model
         'pipeline_stage_id',
         'employee_id',
         'city',
+        'contract_amount',
         'full_name',
     ];
     public function leadSource(): BelongsTo

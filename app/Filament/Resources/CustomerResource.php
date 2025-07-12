@@ -65,7 +65,8 @@ class CustomerResource extends Resource
                             ->maxLength(255)->required(),
                         Forms\Components\Textarea::make('description')
                             ->maxLength(65535)
-                            ->columnSpanFull(),
+                            ,
+                        Forms\Components\TextInput::make('contract_amount')
                     ])
                     ->columns(),
                 Forms\Components\Section::make('Lead Details')
@@ -152,6 +153,7 @@ class CustomerResource extends Resource
                     ->schema([
                         TextEntry::make('full_name'),
                         TextEntry::make('city'),
+                        TextEntry::make('contract_amount')->hidden(fn ($record) => blank($record->contract_amount))
                     ])
                     ->columns(),
                 Section::make('Contact Information')
@@ -404,7 +406,9 @@ class CustomerResource extends Resource
                   ->icon('heroicon-m-book-open')
                   ->url(function ($record) {
                       return CreateQuote::getUrl(['customer_id' => $record->id]);
-                  }),
+                  })->visible(function ($record) {
+                        return Contract::where('customer_id',$record->id)->exists();
+                    }),
                                 Tables\Actions\Action::make('Download Contract')
                     ->icon('heroicon-m-book-open')
                     ->url(fn ($record) => Storage::url($record->contracts?->file_path), true)
@@ -423,7 +427,7 @@ $On_Receiving_job_Offer_Letter_Amount = $fieldMap['On_Receiving_job_Offer_Letter
 $On_Receiving_Work_Permit_Amount = $fieldMap['On_Receiving_Work_Permit_Amount'] ?? null;
 $On_Receiving_Embassy_Appointment = $fieldMap['On_Receiving_Embassy_Appointment'] ?? null;
 $After_Visa_Amount = $fieldMap['After_Visa_Amount'] ?? null;
-$Contract_Amount = $fieldMap['Contract_Amount'] ?? null;
+$Contract_Amount = $record->contract_amount ?? null;
 
                         //   $address = $record->getCustomFieldValue('Address');
                         //      $city = $record->getCustomFieldValue('Country_To_Apply');

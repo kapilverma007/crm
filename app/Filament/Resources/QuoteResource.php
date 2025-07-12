@@ -33,83 +33,44 @@ class QuoteResource extends Resource
         ->schema([
             Forms\Components\Select::make('customer_id')
                 ->searchable()
-                ->relationship('customer')
+                ->relationship('customer',
+                 modifyQueryUsing: fn ($query) => $query->whereHas('contracts') )
                 ->getOptionLabelFromRecordUsing(fn(Customer $record) => $record->full_name)
                 ->searchable(['full_name'])
                 ->default(request()->has('customer_id') ? request()->get('customer_id') : null)
                 ->required(),
-            Section::make()
-                ->columns(1)
-                ->schema([
-                    Forms\Components\Repeater::make('quoteProducts')
-                        ->relationship()
-                        ->schema([
-                            Forms\Components\Select::make('product_id')
-                                ->relationship('product', 'name')
-                                ->disableOptionWhen(function ($value, $state, Get $get) {
-                                    return collect($get('../*.product_id'))
-                                        ->reject(fn($id) => $id == $state)
-                                        ->filter()
-                                        ->contains($value);
-                                })
-                                ->live()
-                                ->afterStateUpdated(function (Get $get, Set $set, $livewire) {
-                                    $set('price', Product::find($get('product_id'))->price);
-                                    self::updateTotals($get, $livewire);
-                                })
-                                ->required(),
-                            Forms\Components\TextInput::make('price')
-                                ->required()
-                                ->numeric()
-                                ->live()
-                                ->afterStateUpdated(function (Get $get, $livewire) {
-                                    self::updateTotals($get, $livewire);
-                                })
-                                ->prefix('$'),
-                            Forms\Components\TextInput::make('quantity')
-                                ->integer()
-                                ->default(1)
-                                ->required()
-                                ->live()
-                        ])
-                        ->live()
-                        ->afterStateUpdated(function (Get $get, $livewire) {
-                            self::updateTotals($get, $livewire);
-                        })
-                        ->afterStateHydrated(function (Get $get, $livewire) {
-                            self::updateTotals($get, $livewire);
-                        })
-                        ->deleteAction(
-                            fn(Action $action) => $action->after(fn(Get $get, $livewire) => self::updateTotals($get, $livewire)),
-                        )
-                        ->reorderable(false)
-                        ->columns(3)
-                ]),
-            Section::make()
-                ->columns(1)
-                ->maxWidth('1/2')
-                ->schema([
-                    Forms\Components\TextInput::make('subtotal')
-                        ->numeric()
-                        ->readOnly()
-                        ->prefix('$')
-                        ->afterStateUpdated(function (Get $get, $livewire) {
-                            self::updateTotals($get, $livewire);
-                        }),
-                    Forms\Components\TextInput::make('taxes')
-                        ->suffix('%')
-                        ->required()
-                        ->numeric()
-                        ->default(20)
-                        ->live(true)
-                        ->afterStateUpdated(function (Get $get, $livewire) {
-                            self::updateTotals($get, $livewire);
-                        }),
-                    Forms\Components\TextInput::make('total')
-                        ->numeric()
-                        ->readOnly()
-                        ->prefix('$')
-                ])
+           Forms\Components\TextInput::make('contract_amount')
+    ->label('Contract Amount')
+    ->numeric()
+    ->required()
+    ->default(0)
+    ->afterStateHydrated(function ($set, callable $get) {
+        $customer = \App\Models\Customer::find($get('customer_id'));
+        if ($customer) {
+            $set('contract_amount', $customer->contract_amount);
+        }
+    })
+    ->afterStateUpdated(function ($state, callable $get) {
+        $customer = \App\Models\Customer::find($get('customer_id'));
+        if ($customer) {
+            $customer->contract_amount = $state;
+            $customer->save();
+        }
+    }),
+  Forms\Components\Repeater::make('payments')
+            ->label('Payments')
+            ->schema([
+                Forms\Components\DatePicker::make('date')
+                    ->required()
+                    ->label('Payment Date'),
+
+                Forms\Components\TextInput::make('amount')
+                    ->numeric()
+                    ->required()
+                    ->label('Amount'),
+            ])
+            ->default([])
+            ->columnSpanFull(),
         ]);
 }
 public static function infolist(Infolist $infolist): Infolist
@@ -163,10 +124,12 @@ public static function updateTotals(Get $get, $livewire): void
                 ->suffix('%')
                 ->sortable(),
             Tables\Columns\TextColumn::make('subtotal')
-                ->numeric()
-                ->money()
+                    ->formatStateUsing(fn ($record) =>
+                        number_format(($record->customer?->contract_amount ?? 0) - collect($record->payments)->sum('amount'), 2)
+                    )
                 ->sortable(),
-            Tables\Columns\TextColumn::make('total')
+
+            Tables\Columns\TextColumn::make('customer.contract_amount')->label('Contract Amount')
                 ->numeric()
                 ->money()
                 ->sortable(),
