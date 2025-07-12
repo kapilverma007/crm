@@ -15,6 +15,9 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Storage;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\ContractMail;
+
 
 class ContractResource extends Resource
 {
@@ -62,8 +65,8 @@ class ContractResource extends Resource
                 Tables\Columns\TextColumn::make('employee.name')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\IconColumn::make('email_sent')
-                    ->boolean(),
+                // Tables\Columns\IconColumn::make('email_sent')
+                //     ->boolean(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -78,6 +81,19 @@ class ContractResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                                Tables\Actions\Action::make('Send Email')
+    ->label('Send Contract')
+    ->icon('heroicon-o-paper-airplane')
+    ->color('success')
+    ->action(function ($record) {
+
+       // Check if file exists
+        if ($record->file_path && Storage::disk('public')->exists($record->file_path)) {
+            Mail::to($record->customer->email)->send(new ContractMail($record));
+            // $record->email_sent = true;
+            // $record->save();
+        }
+    })->requiresConfirmation()
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

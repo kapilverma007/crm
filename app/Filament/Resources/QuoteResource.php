@@ -119,11 +119,14 @@ public static function updateTotals(Get $get, $livewire): void
                 })
                 ->searchable(['full_name'])
                 ->sortable(),
+                     Tables\Columns\TextColumn::make('customer.email')->label('Customer Email')
+                ->searchable(['full_name'])
+                ->sortable(),
             Tables\Columns\TextColumn::make('taxes')
                 ->numeric()
                 ->suffix('%')
                 ->sortable(),
-            Tables\Columns\TextColumn::make('subtotal')
+            Tables\Columns\TextColumn::make('subtotal')->label('Balance Due')
                     ->formatStateUsing(fn ($record) =>
                         number_format(($record->customer?->contract_amount ?? 0) - collect($record->payments)->sum('amount'), 2)
                     )
