@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Quote extends Model
 {
-    protected $fillable = ['customer_id', 'taxes','payments'];
+    protected $fillable = ['customer_id', 'taxes','payments','description'];
     protected $casts = [
     'payments' => 'array',
 ];

@@ -96,7 +96,7 @@
           <p>Falcon International Consultants</p>
           <p>
             Office 607, 6th Floor, Al Rosais Center, Olaya St., Al Olaya Riyadh, 12213, Saudi Arabia<br />
-            Phone: +966 565449820<br />
+            Phone: +966 546130122<br />
             Email: <a href="mailto:info@falconinternationalconsultants.com">info@falconinternationalconsultants.com</a>
           </p>
         </td>
@@ -126,7 +126,7 @@
       <tr>
         <td style="width: 50%;">
           <span class="bold">Description</span><br />
-          Submission Letter: Second Payment
+          {{$invoice->buyer->description}}
         </td>
         <td style="width: 50%; text-align: right;">
           <table class="no-border" style="width: 100%;">
@@ -135,8 +135,8 @@
               <td class="bold text-right">Total Price</td>
             </tr>
             <tr>
-              <td>{{$invoice->buyer->tax}}</td>
-              <td class="text-right">{{$invoice->buyer->contract_amount}} SR</td>
+              <td>{{number_format($invoice->buyer->tax,2)}}</td>
+              <td class="text-right">{{number_format($invoice->buyer->contract_amount,2)}} SR</td>
             </tr>
           </table>
         </td>
@@ -151,22 +151,22 @@
           <table class="no-border" style="width: 100%;">
             <tr>
               <td colspan="2" class="bold">Subtotal:</td>
-              <td colspan="2" class="text-right">{{$invoice->buyer->contract_amount}} SR</td>
+              <td colspan="2" class="text-right">{{number_format($invoice->buyer->contract_amount,2)}} SR</td>
             </tr>
             <tr>
               <td colspan="2" class="bold" style="padding-top: 24px; padding-bottom: 12px;">Total:</td>
-              <td colspan="2" class="text-right" style="padding-top: 24px; padding-bottom: 12px;">{{$invoice->buyer->contract_amount-$invoice->buyer->totalAmount}} SR</td>
+              <td colspan="2" class="text-right" style="padding-top: 24px; padding-bottom: 12px;">{{number_format(($invoice->buyer->contract_amount-$invoice->buyer->totalAmount),2)}} SR</td>
             </tr>
             @foreach ($invoice->buyer->payments as $payment )
- <tr><td colspan="2"><em>Paid on {{ date('d/m/Y', strtotime($payment['date'])) }}</em></td><td colspan="2" class="text-right">{{$payment['amount']}} SR</td></tr>
+ <tr><td colspan="2"><em>Paid on {{ date('d/m/Y', strtotime($payment['date'])) }}</em></td><td colspan="2" class="text-right">{{number_format($payment['amount'],2)}} SR</td></tr>
             @endforeach
             <tr>
               <td colspan="2" style="padding-top: 24px;">Balance on Work Permit</td>
-              <td colspan="2" class="text-right" style="padding-top: 24px;">{{$invoice->buyer->contract_amount-$invoice->buyer->totalAmount}} SR</td>
+              <td colspan="2" class="text-right" style="padding-top: 24px;">{{number_format(($invoice->buyer->contract_amount-$invoice->buyer->totalAmount),2)}} SR</td>
             </tr>
             <tr style="border-top: 1px solid #000;">
               <td colspan="2" class="bold" style="padding: 10px 0;">Amount Due</td>
-              <td colspan="2" class="text-right bold" style="padding: 10px 0;">{{$invoice->buyer->contract_amount-$invoice->buyer->totalAmount}} SR</td>
+              <td colspan="2" class="text-right bold" style="padding: 10px 0;">{{number_format(($invoice->buyer->contract_amount-$invoice->buyer->totalAmount),2)}} SR</td>
             </tr>
           </table>
         </td>

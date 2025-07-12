@@ -39,6 +39,7 @@ class QuoteResource extends Resource
                 ->searchable(['full_name'])
                 ->default(request()->has('customer_id') ? request()->get('customer_id') : null)
                 ->required(),
+                Forms\Components\Textarea::make('description')->required(),
            Forms\Components\TextInput::make('contract_amount')
     ->label('Contract Amount')
     ->numeric()
