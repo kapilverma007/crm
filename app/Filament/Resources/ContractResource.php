@@ -3,7 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ContractResource\Pages;
+use App\Filament\Resources\ContractResource\Pages\CreateContract;
 use App\Filament\Resources\ContractResource\RelationManagers;
+use App\Filament\Resources\QuoteResource\Pages\CreateQuote;
 use App\Models\Contract;
 use App\Models\Customer;
 use Filament\Forms;
@@ -80,7 +82,12 @@ class ContractResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                // Tables\Actions\EditAction::make(),
+                  Tables\Actions\Action::make('Create Invoice')->label('Create Invoice')
+                  ->icon('heroicon-o-paper-airplane')
+                      ->url(function ($record) {
+                      return CreateQuote::getUrl(['customer_id' => $record->id]);
+                  }),
                                 Tables\Actions\Action::make('Send Email')
     ->label('Send Contract')
     ->icon('heroicon-o-paper-airplane')

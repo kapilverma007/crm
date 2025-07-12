@@ -402,7 +402,7 @@ class CustomerResource extends Resource
                     ->success()
                     ->send();
             }),
-               Tables\Actions\Action::make('Create Quote')
+               Tables\Actions\Action::make('Create Invoice')
                   ->icon('heroicon-m-book-open')
                   ->url(function ($record) {
                       return CreateQuote::getUrl(['customer_id' => $record->id]);
