@@ -24,7 +24,7 @@ use Filament\Infolists\Infolist;
 class QuoteResource extends Resource
 {
     protected static ?string $model = Quote::class;
-
+      protected static ?string $label="Invoices";
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
    public static function form(Form $form): Form
