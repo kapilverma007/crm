@@ -86,7 +86,7 @@ class ContractResource extends Resource
                   Tables\Actions\Action::make('Create Invoice')->label('Create Invoice')
                   ->icon('heroicon-o-paper-airplane')
                       ->url(function ($record) {
-                      return CreateQuote::getUrl(['customer_id' => $record->id]);
+                      return CreateQuote::getUrl(['customer_id' => $record->customer->id]);
                   }),
                                 Tables\Actions\Action::make('Send Email')
     ->label('Send Contract')
