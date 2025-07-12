@@ -41,13 +41,13 @@ class QuotePdfController extends Controller
         // }
 
 
-             foreach ($quote->payments as $payment) {
+
             $items[] = (new InvoiceItem())
                 ->title('title')
                 ->pricePerUnit(2000)
                 ->subTotalPrice(1)
                 ->quantity(1);
-        }
+
 
         $invoice = Invoice::make()
         ->template('invoice')
