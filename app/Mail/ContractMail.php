@@ -54,16 +54,19 @@ class ContractMail extends Mailable
      *
      * @return array<int, \Illuminate\Mail\Mailables\Attachment>
      */
-    public function attachments(): array
-    {
-        if (!$this->record->file_path || !Storage::exists($this->record->file_path)) {
-            return [];
-        }
+ public function attachments(): array
+{
+    $path = $this->record->file_path;
 
-        return [
-            Attachment::fromPath(Storage::path($this->record->file_path))
-                ->as('Contract.pdf')
-                ->withMime('application/pdf'),
-        ];
+    if (!$path || !Storage::disk('public')->exists($path)) {
+
+        return [];
     }
+
+    return [
+        Attachment::fromPath(Storage::disk('public')->path($path))
+            ->as('Contract.pdf')
+            ->withMime('application/pdf'),
+    ];
+}
 }
