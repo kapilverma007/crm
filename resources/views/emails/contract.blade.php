@@ -1,7 +1,7 @@
 <html>
 <body>
-    <p>Dear {{ $record->name ?? 'User' }},</p>
+    <p>Dear {{ $record->full_name ?? 'User' }},</p>
     <p>Please find your contract attached to this email.</p>
-    <p>Regards,<br>Your Company</p>
+    <p>Regards,<br>Falcon Consultant</p>
 </body>
 </html>
