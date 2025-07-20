@@ -432,55 +432,66 @@ $Contract_Amount = $record->contract_amount ?? null;
                                        $date=now()->format('d-m-Y');
                             // Call the same logic as generate()
                             $user = $record;
+$timestamp = now()->format('Ymd_His');
+$fileBaseName = 'contract_user_' .  \Illuminate\Support\Str::slug($user->full_name) . '_' . $user->id . '_' . $timestamp;
+$docxFileName = $fileBaseName . '.docx';
+$pdfFileName = $fileBaseName . '.pdf';
 
-                            $templatePath = storage_path('app/template/contract.docx');
-                            $fileName = 'contract_user_' . \Illuminate\Support\Str::slug($user->full_name) . '_' . $user->id .'_'.now()->format('Ymd_His').'.docx';
+  \Illuminate\Support\Facades\Storage::makeDirectory('public/contracts');
 
-                           $outputDocxPath = storage_path("app/public/contracts/{$fileName}");
+$template = new   \PhpOffice\PhpWord\TemplateProcessor(storage_path('app/template/contract.docx'));
+$template->setValue('full_name', $user->full_name);
+$template->setValue('email', $user->email);
+$template->setValue('phone_number', $user->phone_number);
+$template->setValue('Address', $address);
+$template->setValue('city', $city);
+$template->setValue('Registration', $Registration);
+$template->setValue('On_Receiving_job_Offer_Letter_Amount', $On_Receiving_job_Offer_Letter_Amount);
+$template->setValue('On_Receiving_Work_Permit_Amount', $On_Receiving_Work_Permit_Amount);
+$template->setValue('On_Receiving_Embassy_Appointment', $On_Receiving_Embassy_Appointment);
+$template->setValue('After_Visa_Amount', $After_Visa_Amount);
+$template->setValue('Contract_Amount', $Contract_Amount);
+$template->setValue('date', $date);
 
-                            // Ensure directory exists
-                            \Illuminate\Support\Facades\Storage::makeDirectory('contracts');
+$outputDocxPath = storage_path("app/public/contracts/{$docxFileName}");
+$template->saveAs($outputDocxPath); // Save the .docx file
 
-                            // Fill Word template
-                            $template = new \PhpOffice\PhpWord\TemplateProcessor($templatePath);
-                            $template->setValue('full_name', $user->full_name);
-                            $template->setValue('email', $user->email);
+// Convert to PDF
+$pdfPath = storage_path('app/public/contracts');
+$pdfFileName = basename($outputDocxPath, '.docx') . '.pdf';
+$pdfFullPath = $pdfPath . '/' . $pdfFileName;
 
-                            $template->setValue('phone_number', $user->phone_number);
-                            $template->setValue('Address',$address);
+putenv("HOME=/var/www");
 
+$libreoffice = '/usr/bin/libreoffice'; // Or use '/usr/bin/soffice'
+$command = "$libreoffice --headless --convert-to pdf --outdir " . escapeshellarg($pdfPath) . " " . escapeshellarg($outputDocxPath);
 
-                                  $template->setValue('city', $city);
+// Log and execute command
+\Log::info("Running command: " . $command);
+exec($command, $output, $resultCode);
+\Log::info('LibreOffice Output: ' . implode("\n", $output));
+\Log::info('LibreOffice Exit Code: ' . $resultCode);
 
+// Check if PDF is generated
+if ($resultCode === 0 && file_exists($pdfFullPath)) {
+    // Delete the DOCX file after conversion
+    if (file_exists($outputDocxPath)) {
+        unlink($outputDocxPath);
+        \Log::info("Deleted DOCX file: " . $outputDocxPath);
+    }
 
-                                  $template->setValue('Registration',  $Registration);
+    // Save PDF path to database
+    Contract::updateOrCreate(
+        ['customer_id' => $user->id],
+        [
+            'file_path' => 'contracts/' . $pdfFileName, // Save PDF file path
+            'employee_id' => auth()->id(),
+        ]
+    );
 
-
-                                  $template->setValue('On_Receiving_job_Offer_Letter_Amount',  $On_Receiving_job_Offer_Letter_Amount);
-
-
-                                  $template->setValue('On_Receiving_Work_Permit_Amount',  $On_Receiving_Work_Permit_Amount);
-
-
-                                  $template->setValue('On_Receiving_Embassy_Appointment',  $On_Receiving_Embassy_Appointment);
-
-
-                                  $template->setValue('After_Visa_Amount',  $After_Visa_Amount);
-
-
-                                  $template->setValue('Contract_Amount',$Contract_Amount);
-
-
-                                  $template->setValue('date',    $date);
-
-
-
-
-                            $template->saveAs($outputDocxPath);
-                            Contract::updateOrCreate(['customer_id'=>$user->id],[
-                                'file_path'=>'contracts/'.$fileName,
-                                'employee_id'=>auth()->id(),
-                            ]);
+} else {
+    \Log::error("PDF NOT GENERATED at " . $pdfFullPath);
+}
 
                             // Optional: flash notification or log
                             Notification::make()
