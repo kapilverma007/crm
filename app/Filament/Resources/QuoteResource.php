@@ -61,6 +61,9 @@ class QuoteResource extends Resource
   Forms\Components\Repeater::make('payments')
             ->label('Payments')
             ->schema([
+                    Forms\Components\TextInput::make('title')
+                    ->required()
+                    ->label('Stage Name'),
                 Forms\Components\DatePicker::make('date')
                     ->required()
                     ->label('Payment Date'),
@@ -69,6 +72,13 @@ class QuoteResource extends Resource
                     ->numeric()
                     ->required()
                     ->label('Amount'),
+
+                    Forms\Components\DatePicker::make('due_date')
+                    ->label('Due Date'),
+
+                Forms\Components\TextInput::make('due_amount')
+                    ->numeric()
+                    ->label('Due Amount'),
             ])
             ->default([])
             ->columnSpanFull(),

@@ -159,6 +159,10 @@
             </tr>
             @foreach ($invoice->buyer->payments as $payment )
  <tr><td colspan="2"><em>Paid on {{ date('d/m/Y', strtotime($payment['date'])) }}</em></td><td colspan="2" class="text-right">{{number_format($payment['amount'],2)}} SR</td></tr>
+@if (isset($payment['due_date'])   && !blank($payment['due_date']) && isset($payment['due_amount']) && !blank($payment['due_amount']))
+   <tr><td colspan="2"><em>Due on {{ date('d/m/Y', strtotime($payment['due_date'])) }}</em></td><td colspan="2" class="text-right">{{number_format($payment['due_amount'],2)}} SR</td></tr>
+@endif
+
             @endforeach
             <tr>
               <td colspan="2" style="padding-top: 24px;">Balance on Work Permit</td>

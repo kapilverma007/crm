@@ -28,6 +28,7 @@ class QuotePdfController extends Controller
             'tax'=>($quote->customer->contract_amount*15)/100,
             'payments'=>$quote->payments,
             'totalAmount' => collect($quote->payments)->sum('amount'),
+            'dueAmount'=>collect($quote->payments)->sum('due_amount'),
             'description'=>$quote->description,
             'custom_fields' => [
                 'email' => $quote->customer->email
