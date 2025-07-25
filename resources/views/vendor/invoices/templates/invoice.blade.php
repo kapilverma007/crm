@@ -165,7 +165,7 @@
 
             @endforeach
             <tr>
-              <td colspan="2" style="padding-top: 24px;">Balance on Work Permit</td>
+              <td colspan="2" style="padding-top: 24px;">Balance Due</td>
               <td colspan="2" class="text-right" style="padding-top: 24px;">{{number_format(($invoice->buyer->contract_amount-$invoice->buyer->totalAmount),2)}} SR</td>
             </tr>
             <tr style="border-top: 1px solid #000;">
