@@ -7,6 +7,7 @@ use App\Models\LeadSource;
 use Filament\Actions\Imports\ImportColumn;
 use Filament\Actions\Imports\Importer;
 use Filament\Actions\Imports\Models\Import;
+use Illuminate\Container\Attributes\Log;
 
 class CustomerImporter extends Importer
 {
@@ -16,7 +17,7 @@ class CustomerImporter extends Importer
     {
         return [
             ImportColumn::make('full_name')
-                ->rules(['max:255']),
+            ->rules(['max:255']),
             ImportColumn::make('email')
                 ->rules(['email', 'max:255']),
             ImportColumn::make('phone_number')
@@ -57,4 +58,17 @@ class CustomerImporter extends Importer
 
         return $body;
     }
+
+protected function afterFill(): void
+{
+    if (empty($this->record->full_name)) {
+        $row = $this->originalData;
+
+        $firstName = $row['First name'] ?? $row['firstname'] ?? '';
+        $lastName  = $row['Last name']  ?? $row['lastname']  ?? '';
+
+        $this->record->full_name = trim("{$firstName} {$lastName}");
+    }
+}
+
 }
