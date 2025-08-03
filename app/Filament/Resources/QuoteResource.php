@@ -141,16 +141,20 @@ public static function updateTotals(Get $get, $livewire): void
                 ->numeric()
                 ->suffix('%')
                 ->sortable(),
-            Tables\Columns\TextColumn::make('subtotal')->label('Balance Due')
-                    ->formatStateUsing(fn ($record) =>
-                        number_format(($record->customer?->contract_amount ?? 0) - collect($record->payments)->sum('amount'), 2)
-                    )
-                ->sortable(),
+    Tables\Columns\TextColumn::make('subtotal')
+    ->label('Balance Due')
+    ->formatStateUsing(function ($record) {
+        $contractAmount = $record->customer?->customerContractField?->total_contract_amount ?? 0;
+        $paid = collect($record->payments)->sum('amount');
+        return number_format($contractAmount - $paid, 2);
+    })
+    ->sortable(),
 
-            Tables\Columns\TextColumn::make('customer.contract_amount')->label('Contract Amount')
-                ->numeric()
-                ->money()
-                ->sortable(),
+Tables\Columns\TextColumn::make('customer.customerContractField.total_contract_amount')
+    ->label('Contract Amount')
+    ->numeric()
+    ->money()
+    ->sortable(),
             Tables\Columns\TextColumn::make('created_at')
                 ->dateTime()
                 ->sortable()
