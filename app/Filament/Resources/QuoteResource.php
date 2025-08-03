@@ -45,19 +45,23 @@ class QuoteResource extends Resource
     ->numeric()
     ->required()
     ->default(0)
-    ->afterStateHydrated(function ($set, callable $get) {
-        $customer = \App\Models\Customer::find($get('customer_id'));
-        if ($customer) {
-            $set('contract_amount', $customer->contract_amount);
-        }
-    })
-    ->afterStateUpdated(function ($state, callable $get) {
-        $customer = \App\Models\Customer::find($get('customer_id'));
-        if ($customer) {
-            $customer->contract_amount = $state;
-            $customer->save();
-        }
-    }),
+->afterStateHydrated(function ($set, callable $get) {
+    $customer = \App\Models\Customer::with('customerContractField')->find($get('customer_id'));
+
+    if ($customer && $customer->customerContractField) {
+        $set('contract_amount', $customer->customerContractField->total_contract_amount);
+    }
+})
+
+->afterStateUpdated(function ($state, callable $get) {
+    $customer = \App\Models\Customer::with('customerContractField')->find($get('customer_id'));
+
+    if ($customer) {
+        $customer->customerContractField()->updateOrCreate([], [
+            'total_contract_amount' => $state,
+        ]);
+    }
+}),
   Forms\Components\Repeater::make('payments')
             ->label('Payments')
             ->schema([
