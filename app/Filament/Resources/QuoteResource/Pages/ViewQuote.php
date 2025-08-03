@@ -39,23 +39,24 @@ class ViewQuote extends ViewRecord
             // Optional: trigger sending logic here manually if needed
             $signedUrl = URL::signedRoute('quotes.pdf', [$record->id, 'send' => 'true']);
             $quote=$record;
- $customer = new Buyer([
-            'name' => $quote->customer->full_name,
-            'contact'=>$quote->customer->phone_number,
-            'inv_no'=>$quote->created_at->format('Y').'/'.$quote->id,
-            'invoice_date'=>$quote->created_at->format('d/m/Y'),
-            'contract_no'=>$quote->customer->contracts->id,
-            'email'=>$quote->customer->email,
-            'contract_amount'=>$quote->customer->contract_amount,
-            'tax'=>($quote->customer->contract_amount*15)/100,
-            'payments'=>$quote->payments,
-            'totalAmount' => collect($quote->payments)->sum('amount'),
-            'description'=>$quote->description,
-            'custom_fields' => [
-                'email' => $quote->customer->email
+                    $contractAmount = $quote->customer->customerContractField?->total_contract_amount ?? 0;
 
-            ],
-        ]);
+                    $customer = new Buyer([
+                        'name' => $quote->customer->full_name,
+                        'contact' => $quote->customer->phone_number,
+                        'inv_no' => $quote->created_at->format('Y') . '/' . $quote->id,
+                        'invoice_date' => $quote->created_at->format('d/m/Y'),
+                        'contract_no' => $quote->customer->contracts->id ?? null, // Adjust if this should be 'contract'
+                        'email' => $quote->customer->email,
+                        'contract_amount' => $contractAmount,
+                        'tax' => ($contractAmount * 15) / 100,
+                        'payments' => $quote->payments,
+                        'totalAmount' => collect($quote->payments)->sum('amount'),
+                        'description' => $quote->description,
+                        'custom_fields' => [
+                            'email' => $quote->customer->email,
+                        ],
+                    ]);
 
             $items = [];
             $items[] = (new InvoiceItem())

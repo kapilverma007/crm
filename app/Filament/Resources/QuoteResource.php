@@ -153,7 +153,6 @@ public static function updateTotals(Get $get, $livewire): void
 Tables\Columns\TextColumn::make('customer.customerContractField.total_contract_amount')
     ->label('Contract Amount')
     ->numeric()
-    ->money()
     ->sortable(),
             Tables\Columns\TextColumn::make('created_at')
                 ->dateTime()
