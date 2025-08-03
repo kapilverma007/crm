@@ -107,4 +107,7 @@ public function getCustomFieldMap(): array
         ])
         ->toArray();
 }
+public function customerContractField(){
+    return $this->hasOne(CustomerContractField::class);
+}
 }

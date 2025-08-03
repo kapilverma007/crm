@@ -68,6 +68,31 @@ class CustomerResource extends Resource
                         Forms\Components\TextInput::make('contract_amount')
                     ])
                     ->columns(),
+                         Forms\Components\Section::make('Customer Contract Fields')
+                    ->visibleOn('edit')
+                    ->relationship('customerContractField')
+                    ->schema([
+
+                        Forms\Components\TextInput::make('address')
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('service')
+                            ->maxLength(255),
+                         Forms\Components\TextInput::make('city')
+                            ->maxLength(255),
+                              Forms\Components\TextInput::make('registration')
+                             ->numeric(),
+                                Forms\Components\TextInput::make('total_contract_amount')
+                             ->numeric(),
+                                    Forms\Components\TextInput::make('on_receiving_job_offer_letter_amount')
+                             ->numeric(),
+                                    Forms\Components\TextInput::make('on_receiving_work_permit_amount')
+                             ->numeric(),
+                                 Forms\Components\TextInput::make('on_receiving_embassy_appointment_amount')
+                             ->numeric(),
+                              Forms\Components\TextInput::make('after_visa_amount')
+                             ->numeric()
+                    ])
+                    ->columns(),
                 Forms\Components\Section::make('Lead Details')
                     ->schema([
                         Forms\Components\Select::make('lead_source_id')
@@ -154,12 +179,18 @@ class CustomerResource extends Resource
                         TextEntry::make('contract_amount')->hidden(fn($record) => blank($record->contract_amount))
                     ])
                     ->columns(),
-                Section::make('Contact Information')
-                    ->schema([
-                        TextEntry::make('email'),
-                        TextEntry::make('phone_number'),
-                    ])
-                    ->columns(),
+            Section::make('Contract Information')
+                ->hidden(fn($record) => !$record->customerContractField) // Only show if contract exists
+                ->schema(components: [
+                    TextEntry::make('customerContractField.address')->label('Address'),
+                    TextEntry::make('customerContractField.city')->label('City'),
+                    TextEntry::make('customerContractField.total_contract_amount')->label('Total Contract Amount'),
+                    TextEntry::make('customerContractField.on_receiving_job_offer_letter_amount')->label('Job Offer Letter Amount'),
+                    TextEntry::make('customerContractField.on_receiving_work_permit_amount')->label('Work Permit Amount'),
+                    TextEntry::make('customerContractField.on_receiving_embassy_appointment_amount')->label('Embassy Appointment Amount'),
+                    TextEntry::make('customerContractField.after_visa_amount')->label('After Visa Amount'),
+                ])
+                ->columns(),
                 Section::make('Additional Details')
                     ->schema([
                         TextEntry::make('description'),
@@ -407,16 +438,17 @@ class CustomerResource extends Resource
                     Tables\Actions\Action::make('Create Contract')
                         ->icon('heroicon-m-book-open')
                         ->action(function ($record) {
-                            $fieldMap = $record->getCustomFieldMap();
-                            $address = $fieldMap['Address'] ?? null;
-                            $service = $fieldMap['Service'] ?? null;
-                            $city = $fieldMap['Country_To_Apply'] ?? null;
-                            $Registration = $fieldMap['Registration'] ?? null;
-                            $On_Receiving_job_Offer_Letter_Amount = $fieldMap['On_Receiving_job_Offer_Letter_Amount'] ?? null;
-                            $On_Receiving_Work_Permit_Amount = $fieldMap['On_Receiving_Work_Permit_Amount'] ?? null;
-                            $On_Receiving_Embassy_Appointment = $fieldMap['On_Receiving_Embassy_Appointment'] ?? null;
-                            $After_Visa_Amount = $fieldMap['After_Visa_Amount'] ?? null;
-                            $Contract_Amount = $record->contract_amount ?? null;
+                    $contract = $record->customerContractField;
+
+                    $address = $contract?->address;
+                    $service = $contract?->service;
+                    $city = $contract?->city;
+                    $Registration = $contract?->registration;
+                    $On_Receiving_job_Offer_Letter_Amount = $contract?->on_receiving_job_offer_letter_amount;
+                    $On_Receiving_Work_Permit_Amount = $contract?->on_receiving_work_permit_amount;
+                    $On_Receiving_Embassy_Appointment = $contract?->on_receiving_embassy_appointment_amount;
+                    $After_Visa_Amount = $contract?->after_visa_amount;
+                    $Contract_Amount = $contract?->total_contract_amount;
                             $date = now()->format('d-m-Y');
                             // Call the same logic as generate()
                             $user = $record;
