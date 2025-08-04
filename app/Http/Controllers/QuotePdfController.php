@@ -30,6 +30,7 @@ $customer = new Buyer([
     'tax' => ($contractAmount * 15) / 100,
     'payments' => $quote->payments,
     'totalAmount' => collect($quote->payments)->sum('amount'),
+    'totalAmounttax' => collect($quote->payments)->sum('amount') * 0.15,
     'dueAmount' => collect($quote->payments)->sum('due_amount'),
     'description' => $quote->description,
     'custom_fields' => [

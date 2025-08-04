@@ -149,6 +149,10 @@
                 <td colspan="2"><em>Paid on {{ date('d/m/Y', strtotime($payment['date'])) }}</em></td>
                 <td colspan="2" class="text-right">{{ number_format($payment['amount'], 2) }} SR</td>
               </tr>
+                 <tr>
+                <td colspan="2"><em>Tax on paid amount</em></td>
+                <td colspan="2" class="text-right">{{ number_format($invoice->buyer->totalAmounttax, 2) }} SR</td>
+              </tr>
               @if (!empty($payment['due_date']) && !empty($payment['due_amount']))
                 <tr>
                   <td colspan="2"><em>Due on {{ date('d/m/Y', strtotime($payment['due_date'])) }}</em></td>
