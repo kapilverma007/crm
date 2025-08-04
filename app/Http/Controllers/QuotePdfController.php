@@ -15,26 +15,28 @@ class QuotePdfController extends Controller
     {
 
 
-        $quote->load(['quoteProducts.product', 'customer']);
+$quote->load(['quoteProducts.product', 'customer.customerContractField']);
 
-        $customer = new Buyer([
-            'name' => $quote->customer->full_name,
-            'contact'=>$quote->customer->phone_number,
-            'inv_no'=>$quote->created_at->format('Y').'/'.$quote->id,
-            'invoice_date'=>$quote->created_at->format('d/m/Y'),
-            'contract_no'=>$quote->customer->contracts->id,
-            'email'=>$quote->customer->email,
-            'contract_amount'=>$quote->customer->contract_amount,
-            'tax'=>($quote->customer->contract_amount*15)/100,
-            'payments'=>$quote->payments,
-            'totalAmount' => collect($quote->payments)->sum('amount'),
-            'dueAmount'=>collect($quote->payments)->sum('due_amount'),
-            'description'=>$quote->description,
-            'custom_fields' => [
-                'email' => $quote->customer->email
+$contractAmount = $quote->customer->customerContractField?->total_contract_amount ?? 0;
 
-            ],
-        ]);
+$customer = new Buyer([
+    'name' => $quote->customer->full_name,
+    'contact' => $quote->customer->phone_number,
+    'inv_no' => $quote->created_at->format('Y') . '/' . $quote->id,
+    'invoice_date' => $quote->created_at->format('d/m/Y'),
+    'contract_no' => $quote->customer->contracts->id ?? null, // update to 'contract' if it's singular
+    'email' => $quote->customer->email,
+    'contract_amount' => $contractAmount,
+    'tax' => ($contractAmount * 15) / 100,
+    'payments' => $quote->payments,
+    'totalAmount' => collect($quote->payments)->sum('amount'),
+    'dueAmount' => collect($quote->payments)->sum('due_amount'),
+    'description' => $quote->description,
+    'custom_fields' => [
+        'email' => $quote->customer->email,
+    ],
+]);
+
 
         $items = [];
 
