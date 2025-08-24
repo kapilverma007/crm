@@ -33,7 +33,7 @@ use Filament\Infolists\Components\Tabs;
 use Filament\Infolists\Components\Actions\Action;
 use App\Filament\Resources\QuoteResource\Pages\CreateQuote;
 use Filament\Tables\Actions\ImportAction;
-
+use Illuminate\Support\Facades\Auth;
 
 class CustomerResource extends Resource
 {
@@ -76,7 +76,7 @@ class CustomerResource extends Resource
                             ->maxLength(255),
                         Forms\Components\TextInput::make('service')
                             ->maxLength(255),
-                         Forms\Components\TextInput::make('city')
+                         Forms\Components\TextInput::make('city')->label('Country')
                             ->maxLength(255),
                                 Forms\Components\TextInput::make('total_contract_amount')
                              ->numeric(),
@@ -429,7 +429,13 @@ class CustomerResource extends Resource
                         ->url(function ($record) {
                             return CreateQuote::getUrl(['customer_id' => $record->id]);
                         })->visible(function ($record) {
-                            return Contract::where('customer_id', $record->id)->exists();
+                              $user = Auth::user();
+
+        // Only show if:
+        // - user is not role 2
+        // - and contract exists for that customer
+        return $user->role_id != 2 && Contract::where('customer_id', $record->id)->exists();
+                            // return Contract::where('customer_id', $record->id)->exists();
                         }),
                     Tables\Actions\Action::make('Download Contract')
                         ->icon('heroicon-m-book-open')
@@ -445,12 +451,23 @@ class CustomerResource extends Resource
                     $address = $contract?->address;
                     $service = $contract?->service;
                     $city = $contract?->city;
-                    $Registration = $contract?->registration;
-                    $On_Receiving_job_Offer_Letter_Amount = $contract?->on_receiving_job_offer_letter_amount;
-                    $On_Receiving_Work_Permit_Amount = $contract?->on_receiving_work_permit_amount;
-                    $On_Receiving_Embassy_Appointment = $contract?->on_receiving_embassy_appointment_amount;
-                    $After_Visa_Amount = $contract?->after_visa_amount;
-                    $Contract_Amount = $contract?->total_contract_amount;
+
+                    // $Registration = $contract?->registration;
+                    // $On_Receiving_job_Offer_Letter_Amount = $contract?->on_receiving_job_offer_letter_amount;
+                    // $On_Receiving_Work_Permit_Amount = $contract?->on_receiving_work_permit_amount;
+                    // $On_Receiving_Embassy_Appointment = $contract?->on_receiving_embassy_appointment_amount;
+                    // $After_Visa_Amount = $contract?->after_visa_amount;
+                    // $Contract_Amount = $contract?->total_contract_amount;
+          function addSAR($amount) {
+    return $amount !== null ? $amount . ' SAR' : null;
+}
+
+$Registration = addSAR($contract?->registration);
+$On_Receiving_job_Offer_Letter_Amount = addSAR($contract?->on_receiving_job_offer_letter_amount);
+$On_Receiving_Work_Permit_Amount = addSAR($contract?->on_receiving_work_permit_amount);
+$On_Receiving_Embassy_Appointment = addSAR($contract?->on_receiving_embassy_appointment_amount);
+$After_Visa_Amount = addSAR($contract?->after_visa_amount);
+$Contract_Amount = addSAR($contract?->total_contract_amount);
                             $date = now()->format('d-m-Y');
                             // Call the same logic as generate()
                             $user = $record;
@@ -473,7 +490,9 @@ class CustomerResource extends Resource
                             $template->setValue('email', $user->email);
                             $template->setValue('phone_number', $user->phone_number);
                             $template->setValue('Address', $address);
+                            $city = preg_replace('/\s+/', ' ', trim($city));
                             $template->setValue('city', $city);
+                            $service = preg_replace('/\s+/', ' ', trim($service));
                             $template->setValue('service', $service);
                             $template->setValue('Registration', $Registration);
                             $template->setValue('On_Receiving_job_Offer_Letter_Amount', $On_Receiving_job_Offer_Letter_Amount);

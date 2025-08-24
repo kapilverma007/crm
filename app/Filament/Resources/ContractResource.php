@@ -19,7 +19,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Storage;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\ContractMail;
-
+use Illuminate\Support\Facades\Auth;
 
 class ContractResource extends Resource
 {
@@ -86,8 +86,10 @@ class ContractResource extends Resource
                   Tables\Actions\Action::make('Create Invoice')->label('Create Invoice')
                   ->icon('heroicon-o-paper-airplane')
                       ->url(function ($record) {
-                      return CreateQuote::getUrl(['customer_id' => $record->customer->id]);
-                  }),
+                      return CreateQuote::getUrl(['customer_id' => $record->customer?->id]);
+                  })->visible(function ($record) {
+        return Auth::user()->role_id != 2;
+    }),
                                 Tables\Actions\Action::make('Send Email')
     ->label('Send Contract')
     ->icon('heroicon-o-paper-airplane')

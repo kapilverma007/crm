@@ -139,12 +139,16 @@
               <td colspan="2" class="bold">Subtotal:</td>
               <td colspan="2" class="text-right">{{ number_format($invoice->buyer->contract_amount, 2) }} SR</td>
             </tr>
-            <tr>
-              <td colspan="2" class="bold" style="padding-top: 24px; padding-bottom: 12px;">Total:</td>
+            <!-- <tr>
+              <td colspan="2" class="bold" style="padding-top: 24px; padding-bottom: 12px;">Amount Paid:</td>
               <td colspan="2" class="text-right" style="padding-top: 24px; padding-bottom: 12px;">{{ number_format($balanceDue, 2) }} SR</td>
+            </tr> -->
+             <tr>
+              <td colspan="2" class="bold" style="padding-top: 24px; padding-bottom: 12px;">Amount Paid:</td>
+              <td colspan="2" class="text-right" style="padding-top: 24px; padding-bottom: 12px;">{{ number_format($invoice->buyer->totalAmount, 2) }} SR</td>
             </tr>
 
-            @foreach ($invoice->buyer->payments as $payment)
+            <!-- @foreach ($invoice->buyer->payments as $payment)
               <tr>
                 <td colspan="2"><em>Paid on {{ date('d/m/Y', strtotime($payment['date'])) }}</em></td>
                 <td colspan="2" class="text-right">{{ number_format($payment['amount'], 2) }} SR</td>
@@ -159,7 +163,7 @@
                   <td colspan="2" class="text-right">{{ number_format($payment['due_amount'], 2) }} SR</td>
                 </tr>
               @endif
-            @endforeach
+            @endforeach -->
 
             <tr>
               <td colspan="2" style="padding-top: 24px;">Balance Due</td>

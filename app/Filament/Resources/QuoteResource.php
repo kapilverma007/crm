@@ -20,6 +20,7 @@ use App\Models\Product;
 use Filament\Forms\Components\Actions\Action;
 use Filament\Infolists\Components\ViewEntry;
 use Filament\Infolists\Infolist;
+use Illuminate\Support\Facades\Auth;
 
 class QuoteResource extends Resource
 {
@@ -148,7 +149,13 @@ public static function updateTotals(Get $get, $livewire): void
         $paid = collect($record->payments)->sum('amount');
         return number_format($contractAmount - $paid, 2);
     })
-    ->sortable(),
+    ->sortable(),  
+    Tables\Columns\TextColumn::make('paid_amount')
+    ->label('Paid Amount')
+    ->getStateUsing(function ($record) {
+        $paid = collect($record->payments)->sum('amount');
+        return number_format( $paid, 2);
+    }),
 
 Tables\Columns\TextColumn::make('customer.customerContractField.total_contract_amount')
     ->label('Contract Amount')
@@ -167,7 +174,9 @@ Tables\Columns\TextColumn::make('customer.customerContractField.total_contract_a
             //
         ])
         ->actions([
-            Tables\Actions\EditAction::make(),
+            Tables\Actions\EditAction::make()->visible(function () {
+            return Auth::user()->role_id != 2; // Hide if role_id is 2
+        }),
         ])
         ->bulkActions([
             Tables\Actions\BulkActionGroup::make([

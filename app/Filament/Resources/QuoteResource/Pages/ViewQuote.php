@@ -13,6 +13,7 @@ use LaravelDaily\Invoices\Classes\Buyer;
 use LaravelDaily\Invoices\Classes\InvoiceItem;
 use LaravelDaily\Invoices\Invoice;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Auth;
 
 class ViewQuote extends ViewRecord
 {
@@ -22,7 +23,10 @@ class ViewQuote extends ViewRecord
     return [
         Action::make('Edit Invoice')
             ->icon('heroicon-m-pencil-square')
-            ->url(EditQuote::getUrl([$this->record])),
+            ->url(EditQuote::getUrl([$this->record]))
+            ->visible(function () {
+                return Auth::user()->role_id != 2; // Hide if role_id is 2
+            }),
         Action::make('Download Invoice')
             ->icon('heroicon-s-document-check')
             ->url(URL::signedRoute('quotes.pdf', [$this->record->id]), true),
