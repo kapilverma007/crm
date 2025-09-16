@@ -67,6 +67,7 @@ class ContractResource extends Resource
                 Tables\Columns\TextColumn::make('employee.name')
                     ->numeric()
                     ->sortable(),
+                    
                 // Tables\Columns\IconColumn::make('email_sent')
                 //     ->boolean(),
                 Tables\Columns\TextColumn::make('created_at')

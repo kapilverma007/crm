@@ -33,6 +33,10 @@ class CustomerImporter extends Importer
                     ->where('name', $state)
                     ->value('id');   // returns null if not found
             }),
+            ImportColumn::make('message')
+                ->rules(['max:65535']),
+                 ImportColumn::make('select_country'),
+                 ImportColumn::make('select_visa_category'),
         ];
     }
 

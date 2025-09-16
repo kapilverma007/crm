@@ -17,6 +17,7 @@ class CustomerContractField extends Model
     'on_receiving_work_permit_amount',
     'on_receiving_embassy_appointment_amount',
     'after_visa_amount',
+    'flight_ticket'
 ];
 
 public function customer(){

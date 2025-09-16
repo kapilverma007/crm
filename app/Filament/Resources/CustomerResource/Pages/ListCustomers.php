@@ -111,11 +111,47 @@ class ListCustomers extends ListRecords
     } else {
         // Non-admin sees only their own customers
 
-        $tabs['my'] = Tab::make('Total Customers')
-            ->badge(Customer::where('employee_id', auth()->id())->count())
-            ->modifyQueryUsing(function ($query) {
-                return $query->where('employee_id', auth()->id());
+        // $tabs['my'] = Tab::make('Total Customers')
+        //     ->badge(Customer::where('employee_id', auth()->id())->count())
+        //     ->modifyQueryUsing(function ($query) {
+        //         return $query->where('employee_id', auth()->id());
+        //     });
+
+      $userId = auth()->id();
+
+    // 'All Customers' tab (for this employee only)
+    $tabs['all'] = Tab::make('All Customers')
+        ->badge(Customer::where('employee_id', $userId)->count())
+        ->modifyQueryUsing(function ($query) use ($userId) {
+            return $query->where('employee_id', $userId);
+        });
+
+    // Pipeline stages with customers count only for this employee
+    $pipelineStages = PipelineStage::orderBy('position')->get();
+
+    foreach ($pipelineStages as $pipelineStage) {
+        $count = Customer::where('pipeline_stage_id', $pipelineStage->id)
+            ->where('employee_id', $userId)
+            ->count();
+
+        $tabs[str($pipelineStage->name)->slug()->toString()] = Tab::make($pipelineStage->name)
+            ->badge($count)
+            ->modifyQueryUsing(function ($query) use ($pipelineStage, $userId) {
+                return $query->where('pipeline_stage_id', $pipelineStage->id)
+                             ->where('employee_id', $userId);
             });
+    }
+
+    // Archived tab (only employee's archived customers)
+    $archivedCount = Customer::onlyTrashed()
+        ->where('employee_id', $userId)
+        ->count();
+
+    $tabs['archived'] = Tab::make('Archived')
+        ->badge($archivedCount)
+        ->modifyQueryUsing(function ($query) use ($userId) {
+            return $query->onlyTrashed()->where('employee_id', $userId);
+        });
     }
 
     return $tabs;

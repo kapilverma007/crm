@@ -34,6 +34,8 @@ use Filament\Infolists\Components\Actions\Action;
 use App\Filament\Resources\QuoteResource\Pages\CreateQuote;
 use Filament\Tables\Actions\ImportAction;
 use Illuminate\Support\Facades\Auth;
+use Filament\Tables\Actions\BulkAction;
+use Illuminate\Database\Eloquent\Collection;
 
 class CustomerResource extends Resource
 {
@@ -76,7 +78,7 @@ class CustomerResource extends Resource
                             ->maxLength(255),
                         Forms\Components\TextInput::make('service')
                             ->maxLength(255),
-                         Forms\Components\TextInput::make('city')->label('Country')
+                         Forms\Components\TextInput::make('city')->label('Country to Apply')
                             ->maxLength(255),
                                 Forms\Components\TextInput::make('total_contract_amount')
                              ->numeric(),
@@ -89,7 +91,10 @@ class CustomerResource extends Resource
                                  Forms\Components\TextInput::make('on_receiving_embassy_appointment_amount')
                              ->numeric(),
                               Forms\Components\TextInput::make('after_visa_amount')
-                             ->numeric()
+                             ->numeric(),
+                          Forms\Components\Toggle::make('flight_ticket')
+                          ->label('Flight Ticket')
+                          ->default(false),
                     ])
                     ->columns(),
                 Forms\Components\Section::make('Lead Details')
@@ -178,7 +183,10 @@ class CustomerResource extends Resource
                     ->schema([
                         TextEntry::make('full_name'),
                         TextEntry::make('city'),
-                        TextEntry::make('contract_amount')->hidden(fn($record) => blank($record->contract_amount))
+                        TextEntry::make('contract_amount')->hidden(fn($record) => blank($record->contract_amount)),
+                        TextEntry::make('select_country')->label('Country'),
+                        TextEntry::make('select_visa_category')->label('Visa Category'),
+                        TextEntry::make('message')->label('Message'),
                     ])
                     ->columns(),
             Section::make('Contract Information')
@@ -191,6 +199,9 @@ class CustomerResource extends Resource
                     TextEntry::make('customerContractField.on_receiving_work_permit_amount')->label('Work Permit Amount'),
                     TextEntry::make('customerContractField.on_receiving_embassy_appointment_amount')->label('Embassy Appointment Amount'),
                     TextEntry::make('customerContractField.after_visa_amount')->label('After Visa Amount'),
+                    TextEntry::make('customerContractField.flight_ticket')
+    ->label('Flight Ticket')
+    ->formatStateUsing(fn ($state) => $state ? 'Yes' : 'No'),
                 ])
                 ->columns(),
                 Section::make('Additional Details')
@@ -341,6 +352,10 @@ class CustomerResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('leadSource.name'),
                 Tables\Columns\TextColumn::make('pipelineStage.name'),
+                  Tables\Columns\TextColumn::make('select_country')
+                    ->label('Country'),
+                     Tables\Columns\TextColumn::make('select_visa_category')
+                    ->label('Visa Category'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable(),
@@ -468,6 +483,7 @@ $On_Receiving_Work_Permit_Amount = addSAR($contract?->on_receiving_work_permit_a
 $On_Receiving_Embassy_Appointment = addSAR($contract?->on_receiving_embassy_appointment_amount);
 $After_Visa_Amount = addSAR($contract?->after_visa_amount);
 $Contract_Amount = addSAR($contract?->total_contract_amount);
+$Flight_Ticket = $contract?->flight_ticket ? 'Yes' : NULL;
                             $date = now()->format('d-m-Y');
                             // Call the same logic as generate()
                             $user = $record;
@@ -500,6 +516,7 @@ $Contract_Amount = addSAR($contract?->total_contract_amount);
                             $template->setValue('On_Receiving_Embassy_Appointment', $On_Receiving_Embassy_Appointment);
                             $template->setValue('After_Visa_Amount', $After_Visa_Amount);
                             $template->setValue('Contract_Amount', $Contract_Amount);
+                            $template->setValue('Flight_Ticket', $Flight_Ticket);
                             $template->setValue('date', $date);
                             $template->setValue('contract_no', $contract_no);
 
@@ -561,6 +578,33 @@ $Contract_Amount = addSAR($contract?->total_contract_amount);
                     ->hidden(function (Pages\ListCustomers $livewire) {
                         return $livewire->activeTab != 'archived';
                     }),
+           BulkAction::make('assignLead')
+    ->label('Assign Lead')
+    ->icon('heroicon-m-user-plus')
+    ->hidden(!auth()->user()->isAdmin())
+    ->form([
+        Forms\Components\Select::make('employee_id')
+            ->label('Choose Employee')
+            ->options(User::where('role_id', 2)->pluck('name', 'id'))
+            ->searchable()
+            ->required(),
+    ])
+    ->action(function (Collection $records, array $data) {
+        $employeeId = $data['employee_id'];
+
+        foreach ($records as $customer) {
+            $customer->update([
+                'employee_id' => $employeeId,
+            ]);
+        }
+            Notification::make()
+            ->title('Leads Assigned')
+            ->body(count($records) . ' leads successfully assigned.')
+            ->success()
+            ->send();
+    })
+    ->color('success')
+    ->requiresConfirmation()
             ])->defaultSort('id', 'desc');
     }
 
