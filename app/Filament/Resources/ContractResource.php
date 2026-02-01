@@ -40,7 +40,21 @@ class ContractResource extends Resource
                 ->required(),
                      Forms\Components\Section::make('Contract')
                      ->schema([
-                        Forms\Components\FileUpload::make('file_path')->required(),
+                       Forms\Components\FileUpload::make('file_path')
+    ->disk('public')
+    ->directory('contracts')
+    ->preserveFilenames(false)
+    ->acceptedFileTypes([
+        'application/pdf',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'text/csv',
+    ])
+    ->maxSize(5120) // 5MB
+    ->rules([
+        'file',
+        'mimes:pdf,docx,csv',
+    ])
+    ->required(),
                           Forms\Components\Textarea::make('comments')
                      ])
             ]);

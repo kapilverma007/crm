@@ -78,17 +78,106 @@ class ListCustomers extends ListRecords
 
         ];
     }
-    public function getTabs(): array
+//     public function getTabs(): array
+// {
+//     $tabs = [];
+
+//     // Check if user is admin
+//     if (auth()->user()->isAdmin()) {
+//         // Admin sees all tabs
+
+//         // 'All Customers' tab
+//         $tabs['all'] = Tab::make('All Customers')
+//             ->badge(Customer::count());
+
+//         // All pipeline stages
+//         $pipelineStages = PipelineStage::orderBy('position')->withCount('customers')->get();
+
+//         foreach ($pipelineStages as $pipelineStage) {
+//             $tabs[str($pipelineStage->name)->slug()->toString()] = Tab::make($pipelineStage->name)
+//                 ->badge($pipelineStage->customers_count)
+//                 ->modifyQueryUsing(function ($query) use ($pipelineStage) {
+//                     return $query->where('pipeline_stage_id', $pipelineStage->id);
+//                 });
+//         }
+
+//         // Archived tab
+//         $tabs['archived'] = Tab::make('Archived')
+//             ->badge(Customer::onlyTrashed()->count())
+//             ->modifyQueryUsing(function ($query) {
+//                 return $query->onlyTrashed();
+//             });
+
+//     } else {
+//         // Non-admin sees only their own customers
+
+//         // $tabs['my'] = Tab::make('Total Customers')
+//         //     ->badge(Customer::where('employee_id', auth()->id())->count())
+//         //     ->modifyQueryUsing(function ($query) {
+//         //         return $query->where('employee_id', auth()->id());
+//         //     });
+
+//       $userId = auth()->id();
+
+//     // 'All Customers' tab (for this employee only)
+//     $tabs['all'] = Tab::make('All Customers')
+//         ->badge(Customer::where('employee_id', $userId)->count())
+//         ->modifyQueryUsing(function ($query) use ($userId) {
+//             return $query->where('employee_id', $userId);
+//         });
+
+//     // Pipeline stages with customers count only for this employee
+//     $pipelineStages = PipelineStage::orderBy('position')->get();
+
+//     foreach ($pipelineStages as $pipelineStage) {
+//         $count = Customer::where('pipeline_stage_id', $pipelineStage->id)
+//             ->where('employee_id', $userId)
+//             ->count();
+
+//         $tabs[str($pipelineStage->name)->slug()->toString()] = Tab::make($pipelineStage->name)
+//             ->badge($count)
+//             ->modifyQueryUsing(function ($query) use ($pipelineStage, $userId) {
+//                 return $query->where('pipeline_stage_id', $pipelineStage->id)
+//                              ->where('employee_id', $userId);
+//             });
+//     }
+
+//     // Archived tab (only employee's archived customers)
+//     $archivedCount = Customer::onlyTrashed()
+//         ->where('employee_id', $userId)
+//         ->count();
+
+//     $tabs['archived'] = Tab::make('Archived')
+//         ->badge($archivedCount)
+//         ->modifyQueryUsing(function ($query) use ($userId) {
+//             return $query->onlyTrashed()->where('employee_id', $userId);
+//         });
+//     }
+
+//     return $tabs;
+// }
+
+public function getTabs(): array
 {
     $tabs = [];
 
-    // Check if user is admin
-    if (auth()->user()->isAdmin()) {
-        // Admin sees all tabs
+    $user = auth()->user();
+    $userId = $user->id;
 
-        // 'All Customers' tab
+    // Check if user is admin
+    if ($user->isAdmin()) {
+        // Admin: all customers
         $tabs['all'] = Tab::make('All Customers')
-            ->badge(Customer::count());
+            ->badge(Customer::count())
+            ->modifyQueryUsing(function ($query) {
+                return $query
+                    ->leftJoin('customer_pipeline_stages as cps', function ($join) {
+                        $join->on('cps.customer_id', '=', 'customers.id')
+                            ->on('cps.pipeline_stage_id', '=', 'customers.pipeline_stage_id');
+                    })
+                    ->select('customers.*')
+                    ->selectRaw('COALESCE(cps.created_at, customers.created_at) as effective_created_at');
+            });
 
         // All pipeline stages
         $pipelineStages = PipelineStage::orderBy('position')->withCount('customers')->get();
@@ -97,7 +186,14 @@ class ListCustomers extends ListRecords
             $tabs[str($pipelineStage->name)->slug()->toString()] = Tab::make($pipelineStage->name)
                 ->badge($pipelineStage->customers_count)
                 ->modifyQueryUsing(function ($query) use ($pipelineStage) {
-                    return $query->where('pipeline_stage_id', $pipelineStage->id);
+                    return $query
+                        ->leftJoin('customer_pipeline_stages as cps', function ($join) {
+                            $join->on('cps.customer_id', '=', 'customers.id')
+                                ->on('cps.pipeline_stage_id', '=', 'customers.pipeline_stage_id');
+                        })
+                        ->where('customers.pipeline_stage_id', $pipelineStage->id)
+                        ->select('customers.*')
+                        ->selectRaw('COALESCE(cps.created_at, customers.created_at) as effective_created_at');
                 });
         }
 
@@ -105,55 +201,77 @@ class ListCustomers extends ListRecords
         $tabs['archived'] = Tab::make('Archived')
             ->badge(Customer::onlyTrashed()->count())
             ->modifyQueryUsing(function ($query) {
-                return $query->onlyTrashed();
+                return $query
+                    ->onlyTrashed()
+                    ->leftJoin('customer_pipeline_stages as cps', function ($join) {
+                        $join->on('cps.customer_id', '=', 'customers.id')
+                            ->on('cps.pipeline_stage_id', '=', 'customers.pipeline_stage_id');
+                    })
+                    ->select('customers.*')
+                    ->selectRaw('COALESCE(cps.created_at, customers.created_at) as effective_created_at');
             });
 
     } else {
-        // Non-admin sees only their own customers
+        // Employee view
 
-        // $tabs['my'] = Tab::make('Total Customers')
-        //     ->badge(Customer::where('employee_id', auth()->id())->count())
-        //     ->modifyQueryUsing(function ($query) {
-        //         return $query->where('employee_id', auth()->id());
-        //     });
+        // All customers for this employee
+        $tabs['all'] = Tab::make('All Customers')
+            ->badge(Customer::where('employee_id', $userId)->count())
+            ->modifyQueryUsing(function ($query) use ($userId) {
+                return $query
+                    ->where('customers.employee_id', $userId)
+                    ->leftJoin('customer_pipeline_stages as cps', function ($join) {
+                        $join->on('cps.customer_id', '=', 'customers.id')
+                            ->on('cps.pipeline_stage_id', '=', 'customers.pipeline_stage_id');
+                    })
+                    ->select('customers.*')
+                    ->selectRaw('COALESCE(cps.created_at, customers.created_at) as effective_created_at');
+            });
 
-      $userId = auth()->id();
+        // Pipeline stage tabs for this employee
+        $pipelineStages = PipelineStage::orderBy('position')->get();
 
-    // 'All Customers' tab (for this employee only)
-    $tabs['all'] = Tab::make('All Customers')
-        ->badge(Customer::where('employee_id', $userId)->count())
-        ->modifyQueryUsing(function ($query) use ($userId) {
-            return $query->where('employee_id', $userId);
-        });
+        foreach ($pipelineStages as $pipelineStage) {
+            $count = Customer::where('pipeline_stage_id', $pipelineStage->id)
+                ->where('employee_id', $userId)
+                ->count();
 
-    // Pipeline stages with customers count only for this employee
-    $pipelineStages = PipelineStage::orderBy('position')->get();
+            $tabs[str($pipelineStage->name)->slug()->toString()] = Tab::make($pipelineStage->name)
+                ->badge($count)
+                ->modifyQueryUsing(function ($query) use ($pipelineStage, $userId) {
+                    return $query
+                        ->where('customers.employee_id', $userId)
+                        ->where('customers.pipeline_stage_id', $pipelineStage->id)
+                        ->leftJoin('customer_pipeline_stages as cps', function ($join) {
+                            $join->on('cps.customer_id', '=', 'customers.id')
+                                ->on('cps.pipeline_stage_id', '=', 'customers.pipeline_stage_id');
+                        })
+                        ->select('customers.*')
+                        ->selectRaw('COALESCE(cps.created_at, customers.created_at) as effective_created_at');
+                });
+        }
 
-    foreach ($pipelineStages as $pipelineStage) {
-        $count = Customer::where('pipeline_stage_id', $pipelineStage->id)
+        // Archived customers for this employee
+        $archivedCount = Customer::onlyTrashed()
             ->where('employee_id', $userId)
             ->count();
 
-        $tabs[str($pipelineStage->name)->slug()->toString()] = Tab::make($pipelineStage->name)
-            ->badge($count)
-            ->modifyQueryUsing(function ($query) use ($pipelineStage, $userId) {
-                return $query->where('pipeline_stage_id', $pipelineStage->id)
-                             ->where('employee_id', $userId);
+        $tabs['archived'] = Tab::make('Archived')
+            ->badge($archivedCount)
+            ->modifyQueryUsing(function ($query) use ($userId) {
+                return $query
+                    ->onlyTrashed()
+                    ->where('customers.employee_id', $userId)
+                    ->leftJoin('customer_pipeline_stages as cps', function ($join) {
+                        $join->on('cps.customer_id', '=', 'customers.id')
+                            ->on('cps.pipeline_stage_id', '=', 'customers.pipeline_stage_id');
+                    })
+                    ->select('customers.*')
+                    ->selectRaw('COALESCE(cps.created_at, customers.created_at) as effective_created_at');
             });
-    }
-
-    // Archived tab (only employee's archived customers)
-    $archivedCount = Customer::onlyTrashed()
-        ->where('employee_id', $userId)
-        ->count();
-
-    $tabs['archived'] = Tab::make('Archived')
-        ->badge($archivedCount)
-        ->modifyQueryUsing(function ($query) use ($userId) {
-            return $query->onlyTrashed()->where('employee_id', $userId);
-        });
     }
 
     return $tabs;
 }
+
 }

@@ -36,6 +36,7 @@ use Filament\Tables\Actions\ImportAction;
 use Illuminate\Support\Facades\Auth;
 use Filament\Tables\Actions\BulkAction;
 use Illuminate\Database\Eloquent\Collection;
+use Filament\Forms\Components\DateTimePicker;
 
 class CustomerResource extends Resource
 {
@@ -359,6 +360,10 @@ class CustomerResource extends Resource
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('effective_created_at')
+    ->label('Stage Move Date')
+    ->dateTime()
+    ->sortable()
                 // Tables\Columns\TextColumn::make('updated_at')
                 //     ->dateTime()
                 //     ->sortable()
@@ -412,6 +417,21 @@ class CustomerResource extends Resource
                                 ->success()
                                 ->send();
                         }),
+              Tables\Actions\Action::make('Open WhatsApp')
+    ->icon('heroicon-o-chat-bubble-oval-left-ellipsis')
+    ->color('success')
+    ->label('Open WhatsApp')
+    ->url(function ($record) {
+        // Clean phone number (remove +, spaces, etc.)
+        $phone = preg_replace('/[^0-9]/', '', $record->phone_number);
+
+        // Debug if needed
+        // dd($phone);
+
+        // WhatsApp Web link
+        return "https://web.whatsapp.com/send?phone={$phone}";
+    })
+    ->openUrlInNewTab(),
                     Tables\Actions\Action::make('Add Task')
                         ->icon('heroicon-s-clipboard-document')
                         ->form([
@@ -426,8 +446,11 @@ class CustomerResource extends Resource
                                 :  Forms\Components\Hidden::make('user_id')
                                 ->default(auth()->id()),
                             // non-admin cannot change
-                            Forms\Components\DatePicker::make('due_date')
-                                ->native(false),
+                              DateTimePicker::make('due_date')
+    ->label('Due Date & Time')
+    ->required()
+    ->seconds(false) // Set to true if you want seconds as well
+    ->displayFormat('d M Y h:i A'), // For user-friendly display
 
                         ])
 

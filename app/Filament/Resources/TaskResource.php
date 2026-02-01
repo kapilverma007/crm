@@ -47,8 +47,8 @@ class TaskResource extends Resource
     ->label('Due Date & Time')
     ->required()
     ->seconds(false) // Set to true if you want seconds as well
-    ->displayFormat('d M Y h:i A') // For user-friendly display
-    ->timezone('Asia/Kolkata'), // Optional: set to your desired timezone
+    ->displayFormat('d M Y h:i A'), // For user-friendly display
+   
         Forms\Components\Toggle::make('is_completed')
             ->required(),
     ]);
@@ -64,21 +64,35 @@ class TaskResource extends Resource
             })
             ->searchable(['full_name'])
             ->sortable(),
+              Tables\Columns\TextColumn::make('customer.phone_number')
+            ->formatStateUsing(function ($record) {
+                return $record->customer->phone_number;
+            })
+            ->searchable(['phone_number'])
+            ->sortable(),
+             Tables\Columns\TextColumn::make('customer.email')
+            ->formatStateUsing(function ($record) {
+                return $record->customer->email;
+            })
+            ->searchable(['email'])
+            ->sortable(),
         Tables\Columns\TextColumn::make('employee.name')
             ->label('Employee')
             ->searchable()
             ->sortable(),
         Tables\Columns\TextColumn::make('description')
-            ->html(),
+            ->html()
+            ->wrap(),
+        Tables\Columns\TextColumn::make('created_at')
+            ->dateTime()
+            ->sortable()
+            ->label('Creation Date'),
         Tables\Columns\TextColumn::make('due_date')
              ->dateTime('d M Y h:i A')
             ->sortable(),
         Tables\Columns\IconColumn::make('is_completed')
             ->boolean(),
-        Tables\Columns\TextColumn::make('created_at')
-            ->dateTime()
-            ->sortable()
-            ->toggleable(isToggledHiddenByDefault: true),
+     
         Tables\Columns\TextColumn::make('updated_at')
             ->dateTime()
             ->sortable()
@@ -109,10 +123,19 @@ class TaskResource extends Resource
             Tables\Actions\DeleteBulkAction::make(),
         ]),
     ])
-    ->defaultSort(function ($query) {
-        return $query->orderBy('due_date', 'asc')
-            ->orderBy('id', 'desc');
-    });
+->defaultSort(function ($query) {
+    return $query
+        ->orderByRaw("
+            CASE 
+                WHEN due_date IS NULL THEN 4
+                WHEN due_date >= CURDATE() AND MONTH(due_date) = MONTH(CURDATE()) AND YEAR(due_date) = YEAR(CURDATE()) THEN 1
+                WHEN due_date > CURDATE() THEN 2
+                ELSE 3
+            END
+        ")
+        ->orderBy('due_date', 'asc') // earliest first within each group
+        ->orderBy('id', 'desc');
+});
     }
 
     public static function getRelations(): array
