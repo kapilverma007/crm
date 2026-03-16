@@ -11,7 +11,8 @@ class Contract extends Model
         'comments',
         'email_sent',
         'employee_id',
-        'file_path'
+        'file_path',
+        'contract_number'
     ];
 
     public function customer(){

@@ -41,8 +41,9 @@ class ContractResource extends Resource
                      Forms\Components\Section::make('Contract')
                      ->schema([
                        Forms\Components\FileUpload::make('file_path')
-    ->disk('public')
+    ->disk('local')
     ->directory('contracts')
+    ->visibility('private')
     ->preserveFilenames(false)
     ->acceptedFileTypes([
         'application/pdf',
@@ -74,7 +75,7 @@ class ContractResource extends Resource
                 Tables\Columns\TextColumn::make('file_path')
                 ->label('Contract')
                     ->formatStateUsing(fn() => "Download Contract")
-                  ->url(fn($record) => Storage::url($record->file_path), true)
+                  ->url(fn($record) => route('download.contract', ['path' => basename($record->file_path)]), true)
                      ->badge()
                     ->color(Color::Blue),
                 Tables\Columns\TextColumn::make('comments')->searchable(),
@@ -112,7 +113,7 @@ class ContractResource extends Resource
     ->action(function ($record) {
 
        // Check if file exists
-        if ($record->file_path && Storage::disk('public')->exists($record->file_path)) {
+        if ($record->file_path && Storage::disk('local')->exists($record->file_path)) {
             Mail::to($record->customer->email)->send(new ContractMail($record));
             // $record->email_sent = true;
             // $record->save();
@@ -137,8 +138,8 @@ class ContractResource extends Resource
     {
         return [
             'index' => Pages\ListContracts::route('/'),
-            'create' => Pages\CreateContract::route('/create'),
-            'edit' => Pages\EditContract::route('/{record}/edit'),
+            // 'create' => Pages\CreateContract::route('/create'),
+            // 'edit' => Pages\EditContract::route('/{record}/edit'),
         ];
     }
 }

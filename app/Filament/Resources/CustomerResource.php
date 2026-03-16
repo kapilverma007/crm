@@ -122,27 +122,53 @@ class CustomerResource extends Resource
                             ->addActionLabel('Add Document')
                             ->schema([
                                 Forms\Components\FileUpload::make('file_path')
-                                    ->required(),
+                                    ->required()
+                                    ->acceptedFileTypes([
+                                        'application/pdf',
+                                        'image/jpeg',
+                                        'image/png',
+                                    ])
+                                    ->rules([
+                                        'mimes:pdf,jpg,jpeg,png',
+                                        'max:2048', // 2MB
+                                    ])
+                                    ->directory('documents')
+                                    ->visibility('private'),
                                 Forms\Components\Textarea::make('comments'),
                             ])
                             ->columns()
                     ]),
-                Forms\Components\Section::make('Contracts')
-                    // This will make the section visible only on the edit page
-                    ->visibleOn('edit')
-                    ->schema([
-                        Forms\Components\Repeater::make('contracts')
-                            ->relationship('contracts')
-                            ->hiddenLabel()
-                            ->reorderable(false)
-                            ->addActionLabel('Add Contract')
-                            ->schema([
-                                Forms\Components\FileUpload::make('file_path')
-                                    ->required(),
-                                Forms\Components\Textarea::make('comments'),
-                            ])
-                            ->columns()
+             Forms\Components\Section::make('Contracts')
+    ->visibleOn('edit')
+    ->schema([
+        Forms\Components\Repeater::make('contracts')
+            ->relationship('contracts')
+            ->hiddenLabel()
+            ->reorderable(false)
+            ->addActionLabel('Add Contract')
+            ->schema([
+                Forms\Components\FileUpload::make('file_path')
+                    ->required()
+                    ->disk('local') // do NOT use public disk
+                    ->directory('contracts')
+                    ->visibility('private')
+                    ->preserveFilenames(false)
+                    ->acceptedFileTypes([
+                        'application/pdf',
+                        'image/jpeg',
+                        'image/png',
+                    ])
+                    ->rules([
+                        'mimes:pdf,jpg,jpeg,png',
+                        'max:2048', // 2MB
                     ]),
+
+                Forms\Components\Textarea::make('comments')
+                    ->maxLength(1000)
+                    ->columnSpanFull(),
+            ])
+            ->columns(2),
+    ]),
                 // Forms\Components\Section::make('Additional fields')
                 //     ->schema([
                 //         Forms\Components\Repeater::make('fields')
@@ -235,11 +261,8 @@ class CustomerResource extends Resource
                             ->schema([
                                 TextEntry::make('file_path')
                                     ->label('Document')
-                                    // This will rename the column to "Download Document" (otherwise, it's just the file name)
                                     ->formatStateUsing(fn() => "Download Document")
-                                    // URL to be used for the download (link), and the second parameter is for the new tab
-                                    ->url(fn($record) => Storage::url($record->file_path), true)
-                                    // This will make the link look like a "badge" (blue)
+                                    ->url(fn($record) => route('download.document', ['path' => basename($record->file_path)]), true)
                                     ->badge()
                                     ->color(Color::Blue),
                                 TextEntry::make('comments'),
@@ -252,7 +275,7 @@ class CustomerResource extends Resource
                         TextEntry::make('contracts.file_path')
                             ->label('Contract')
                             ->formatStateUsing(fn() => 'Download Contract')
-                            ->url(fn($record) => Storage::url($record->contracts->file_path), true)
+                            ->url(fn($record) => route('download.contract', ['path' => basename($record->contracts->file_path)]), true)
                             ->badge()
                             ->color(Color::Blue),
                         TextEntry::make('contracts.comments')
@@ -436,7 +459,12 @@ class CustomerResource extends Resource
                         ->icon('heroicon-s-clipboard-document')
                         ->form([
                             Forms\Components\RichEditor::make('description')
-                                ->required(),
+                                ->required()
+                                 ->disableToolbarButtons([
+        'attachFiles',
+         'link',
+        'codeBlock',
+    ]),
                             auth()->user()->isAdmin()
                                 ?  Forms\Components\Select::make('user_id')
                                 ->label('Employee')
@@ -477,7 +505,7 @@ class CustomerResource extends Resource
                         }),
                     Tables\Actions\Action::make('Download Contract')
                         ->icon('heroicon-m-book-open')
-                        ->url(fn($record) => Storage::url($record->contracts?->file_path), true)
+                        ->url(fn($record) => route('download.contract', ['path' => basename($record->contracts?->file_path)]), true)
                         ->visible(function ($record) {
                             return Contract::where('customer_id', $record->id)->exists();
                         }),
@@ -514,15 +542,21 @@ $Flight_Ticket = $contract?->flight_ticket ? 'Yes' : NULL;
                             $fileBaseName = 'contract_user_' .  \Illuminate\Support\Str::slug($user->full_name) . '_' . $user->id . '_' . $timestamp;
                             $docxFileName = $fileBaseName . '.docx';
                             $pdfFileName = $fileBaseName . '.pdf';
-                            $res = Contract::updateOrCreate(
-                                ['customer_id' => $user->id],
-                                [
-                                    'file_path' => 'contracts/' . $pdfFileName, // Save PDF file path
-                                    'employee_id' => auth()->id(),
-                                ]
-                            );
-                            $contract_no = "FC" . $res->id;
-                            \Illuminate\Support\Facades\Storage::makeDirectory('public/contracts');
+                            // Get last contract number
+    $lastNumber = Contract::max('contract_number');
+
+    $newContractNumber = $lastNumber ? $lastNumber + 1 : 1;
+
+    $res = Contract::updateOrCreate(
+        ['customer_id' => $user->id],
+        [
+            'file_path'       => 'contracts/' . $pdfFileName,
+            'employee_id'     => auth()->id(),
+            'contract_number' => $newContractNumber,
+        ]
+    );
+    $contract_no = "FC" . $newContractNumber;
+                            \Illuminate\Support\Facades\Storage::disk('local')->makeDirectory('contracts');
 
                             $template = new   \PhpOffice\PhpWord\TemplateProcessor(storage_path('app/template/contract.docx'));
                             $template->setValue('full_name', $user->full_name);
@@ -543,36 +577,61 @@ $Flight_Ticket = $contract?->flight_ticket ? 'Yes' : NULL;
                             $template->setValue('date', $date);
                             $template->setValue('contract_no', $contract_no);
 
-                            $outputDocxPath = storage_path("app/public/contracts/{$docxFileName}");
+                            $outputDocxPath = storage_path("app/private/contracts/{$docxFileName}");
                             $template->saveAs($outputDocxPath); // Save the .docx file
 
                             // Convert to PDF
-                            $pdfPath = storage_path('app/public/contracts');
+                            $pdfPath = storage_path('app/private/contracts');
                             $pdfFileName = basename($outputDocxPath, '.docx') . '.pdf';
                             $pdfFullPath = $pdfPath . '/' . $pdfFileName;
 
-                            putenv("HOME=/var/www");
+                            // putenv("HOME=/var/www");
 
-                            $libreoffice = '/usr/bin/libreoffice'; // Or use '/usr/bin/soffice'
-                            $command = "$libreoffice --headless --convert-to pdf --outdir " . escapeshellarg($pdfPath) . " " . escapeshellarg($outputDocxPath);
+                            // $libreoffice = '/usr/bin/libreoffice'; // Or use '/usr/bin/soffice'
+                            // $command = "$libreoffice --headless --convert-to pdf --outdir " . escapeshellarg($pdfPath) . " " . escapeshellarg($outputDocxPath);
 
-                            // Log and execute command
-                            \Log::info("Running command: " . $command);
-                            exec($command, $output, $resultCode);
-                            \Log::info('LibreOffice Output: ' . implode("\n", $output));
-                            \Log::info('LibreOffice Exit Code: ' . $resultCode);
+                            // // Log and execute command
+                            // \Log::info("Running command: " . $command);
+                            // exec($command, $output, $resultCode);
+                            // \Log::info('LibreOffice Output: ' . implode("\n", $output));
+                            // \Log::info('LibreOffice Exit Code: ' . $resultCode);
 
-                            //Check if PDF is generated
-                            if ($resultCode === 0 && file_exists($pdfFullPath)) {
-                                // Delete the DOCX file after conversion
-                                if (file_exists($outputDocxPath)) {
-                                    unlink($outputDocxPath);
-                                    \Log::info("Deleted DOCX file: " . $outputDocxPath);
-                                }
+                            // //Check if PDF is generated
+                            // if ($resultCode === 0 && file_exists($pdfFullPath)) {
+                            //     // Delete the DOCX file after conversion
+                            //     if (file_exists($outputDocxPath)) {
+                            //         unlink($outputDocxPath);
+                            //         \Log::info("Deleted DOCX file: " . $outputDocxPath);
+                            //     }
 
-                            } else {
-                                \Log::error("PDF NOT GENERATED at " . $pdfFullPath);
-                            }
+                            // } else {
+                            //     \Log::error("PDF NOT GENERATED at " . $pdfFullPath);
+                            // }
+                            // ensure HOME is set (fixes permission/temp issues)
+putenv("HOME=/tmp");
+
+// use soffice (recommended)
+$soffice = '/usr/bin/soffice';
+
+$command = "$soffice --headless --nologo --nolockcheck --nodefault --norestore "
+    . "--convert-to pdf --outdir "
+    . escapeshellarg($pdfPath) . " "
+    . escapeshellarg($outputDocxPath);
+
+// Log & execute
+\Log::info("Running command: " . $command);
+exec($command, $output, $resultCode);
+\Log::info('LibreOffice Output: ' . implode("\n", $output));
+\Log::info('LibreOffice Exit Code: ' . $resultCode);
+
+// Check result
+if ($resultCode === 0 && file_exists($pdfFullPath)) {
+    // Delete DOCX after success
+    unlink($outputDocxPath);
+    \Log::info("PDF generated successfully: " . $pdfFullPath);
+} else {
+    \Log::error("PDF NOT GENERATED at " . $pdfFullPath);
+}
 
                           //  Optional: flash notification or log
                             Notification::make()

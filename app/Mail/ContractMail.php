@@ -58,13 +58,13 @@ class ContractMail extends Mailable
 {
     $path = $this->record->file_path;
 
-    if (!$path || !Storage::disk('public')->exists($path)) {
+    if (!$path || !Storage::disk('local')->exists($path)) {
 
         return [];
     }
 
     return [
-        Attachment::fromPath(Storage::disk('public')->path($path))
+        Attachment::fromPath(Storage::disk('local')->path($path))
             ->as('Contract.pdf')
             ->withMime('application/pdf'),
     ];

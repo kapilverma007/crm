@@ -38,10 +38,15 @@ class TaskResource extends Resource
             ->relationship('employee', 'name')
            ->hidden(fn () => !auth()->user()->isAdmin()),
 
-        Forms\Components\RichEditor::make('description')
-            ->required()
-            ->maxLength(65535)
-            ->columnSpanFull(),
+      Forms\Components\RichEditor::make('description')
+    ->required()
+    ->maxLength(65535)
+    ->disableToolbarButtons([
+        'attachFiles',
+         'link',
+        'codeBlock',
+    ])
+    ->columnSpanFull(),
         // Forms\Components\DateTimePicker::make('due_date'),
         DateTimePicker::make('due_date')
     ->label('Due Date & Time')
