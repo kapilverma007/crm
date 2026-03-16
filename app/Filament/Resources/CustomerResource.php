@@ -377,6 +377,10 @@ class CustomerResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('phone_number')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('date_of_birth')
+                    ->label('DOB')
+                    ->date('d M Y')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('city')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('leadSource.name'),
