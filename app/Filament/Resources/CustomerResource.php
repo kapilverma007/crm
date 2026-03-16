@@ -66,6 +66,11 @@ class CustomerResource extends Resource
                             ->maxLength(255)->required(),
                         Forms\Components\TextInput::make('phone_number')
                             ->maxLength(255)->required(),
+                        Forms\Components\DatePicker::make('date_of_birth')
+                            ->label('Date of Birth')
+                            ->displayFormat('d M Y')
+                            ->native(false)
+                            ->maxDate(now()),
                         Forms\Components\Textarea::make('description')
                             ->maxLength(65535),
                         // Forms\Components\TextInput::make('contract_amount')

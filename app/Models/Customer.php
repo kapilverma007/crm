@@ -26,6 +26,11 @@ class Customer extends Model
         'city',
         'contract_amount',
         'full_name',
+        'date_of_birth',
+    ];
+
+    protected $casts = [
+        'date_of_birth' => 'date',
     ];
     public function leadSource(): BelongsTo
     {

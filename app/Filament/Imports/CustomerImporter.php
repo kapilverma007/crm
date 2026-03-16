@@ -33,6 +33,9 @@ class CustomerImporter extends Importer
                     ->where('name', $state)
                     ->value('id');   // returns null if not found
             }),
+            ImportColumn::make('date_of_birth')
+                ->label('Date of Birth')
+                ->rules(['nullable', 'date']),
             ImportColumn::make('message')
                 ->rules(['max:65535']),
                  ImportColumn::make('select_country'),
