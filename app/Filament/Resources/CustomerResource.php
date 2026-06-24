@@ -13,6 +13,7 @@ use App\Models\Role;
 use App\Models\User;
 use App\Models\Task;
 use App\Models\Contract;
+use PhpOffice\PhpWord\TemplateProcessor;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -521,132 +522,149 @@ class CustomerResource extends Resource
                     Tables\Actions\Action::make('Create Contract')
                         ->icon('heroicon-m-book-open')
                         ->action(function ($record) {
-                    $contract = $record->customerContractField;
+                            $contractField = $record->customerContractField;
 
-                    $address = $contract?->address;
-                    $service = $contract?->service;
-                    $city = $contract?->city;
+                            $address = $contractField?->address ?? '';
+                            $service = preg_replace('/\s+/', ' ', trim($contractField?->service ?? ''));
+                            if(empty($service)){
+                                $service="Work Permit";
+                            }
+                            $city = preg_replace('/\s+/', ' ', trim($contractField?->city ?? ''));
 
-                    // $Registration = $contract?->registration;
-                    // $On_Receiving_job_Offer_Letter_Amount = $contract?->on_receiving_job_offer_letter_amount;
-                    // $On_Receiving_Work_Permit_Amount = $contract?->on_receiving_work_permit_amount;
-                    // $On_Receiving_Embassy_Appointment = $contract?->on_receiving_embassy_appointment_amount;
-                    // $After_Visa_Amount = $contract?->after_visa_amount;
-                    // $Contract_Amount = $contract?->total_contract_amount;
-          function addSAR($amount) {
-    return $amount !== null ? $amount . ' SAR' : null;
-}
+                            // Wrap LTR values with Unicode directional isolate chars
+                            // so they render correctly inside RTL Arabic text in PDF
+                            $lri = "\u{2066}"; // Left-to-Right Isolate
+                            $pdi = "\u{2069}"; // Pop Directional Isolate
+                            $addSAR = fn($amount) => $amount !== null ? $lri . $amount . ' SAR' . $pdi : $lri . 'NA' . $pdi;
 
-$Registration = addSAR($contract?->registration);
-$On_Receiving_job_Offer_Letter_Amount = addSAR($contract?->on_receiving_job_offer_letter_amount);
-$On_Receiving_Work_Permit_Amount = addSAR($contract?->on_receiving_work_permit_amount);
-$On_Receiving_Embassy_Appointment = addSAR($contract?->on_receiving_embassy_appointment_amount);
-$After_Visa_Amount = addSAR($contract?->after_visa_amount);
-$Contract_Amount = addSAR($contract?->total_contract_amount);
-$Flight_Ticket = $contract?->flight_ticket ? 'Yes' : NULL;
+                            $Registration = $addSAR($contractField?->registration);
+                            $On_Receiving_job_Offer_Letter_Amount = $addSAR($contractField?->on_receiving_job_offer_letter_amount);
+                            $On_Receiving_Work_Permit_Amount = $addSAR($contractField?->on_receiving_work_permit_amount);
+                            $On_Receiving_Embassy_Appointment = $addSAR($contractField?->on_receiving_embassy_appointment_amount);
+                            $After_Visa_Amount = $addSAR($contractField?->after_visa_amount);
+                            $Contract_Amount = $addSAR($contractField?->total_contract_amount);
+                            $Flight_Ticket = $contractField?->flight_ticket ? $lri . 'Yes' . $pdi : $lri . 'NA' . $pdi;
                             $date = now()->format('d-m-Y');
-                            // Call the same logic as generate()
+
                             $user = $record;
                             $timestamp = now()->format('Ymd_His');
-                            $fileBaseName = 'contract_user_' .  \Illuminate\Support\Str::slug($user->full_name) . '_' . $user->id . '_' . $timestamp;
+                            $fileBaseName = 'contract_user_' . \Illuminate\Support\Str::slug($user->full_name) . '_' . $user->id . '_' . $timestamp;
                             $docxFileName = $fileBaseName . '.docx';
                             $pdfFileName = $fileBaseName . '.pdf';
-                            // Get last contract number
-    $lastNumber = Contract::max('contract_number');
 
-    $newContractNumber = $lastNumber ? $lastNumber + 1 : 1;
+                            $lastNumber = Contract::max('contract_number');
+                            $newContractNumber = $lastNumber ? $lastNumber + 1 : 1;
 
-    $res = Contract::updateOrCreate(
-        ['customer_id' => $user->id],
-        [
-            'file_path'       => 'contracts/' . $pdfFileName,
-            'employee_id'     => auth()->id(),
-            'contract_number' => $newContractNumber,
-        ]
-    );
-    $contract_no = "FC" . $newContractNumber;
+                            $contract_no = "FC" . $newContractNumber;
+
                             \Illuminate\Support\Facades\Storage::disk('local')->makeDirectory('contracts');
 
-                            $template = new   \PhpOffice\PhpWord\TemplateProcessor(storage_path('app/template/contract.docx'));
-                            $template->setValue('full_name', $user->full_name);
-                            $template->setValue('email', $user->email);
-                            $template->setValue('phone_number', $user->phone_number);
-                            $template->setValue('Address', $address);
-                            $city = preg_replace('/\s+/', ' ', trim($city));
-                            $template->setValue('city', $city);
-                            $service = preg_replace('/\s+/', ' ', trim($service));
-                            $template->setValue('service', $service);
-                            $template->setValue('Registration', $Registration);
-                            $template->setValue('On_Receiving_job_Offer_Letter_Amount', $On_Receiving_job_Offer_Letter_Amount);
-                            $template->setValue('On_Receiving_Work_Permit_Amount', $On_Receiving_Work_Permit_Amount);
-                            $template->setValue('On_Receiving_Embassy_Appointment', $On_Receiving_Embassy_Appointment);
-                            $template->setValue('After_Visa_Amount', $After_Visa_Amount);
-                            $template->setValue('Contract_Amount', $Contract_Amount);
-                            $template->setValue('Flight_Ticket', $Flight_Ticket);
-                            $template->setValue('date', $date);
-                            $template->setValue('contract_no', $contract_no);
+                            // Use PhpWord TemplateProcessor with docx template
+                            $templatePath = public_path('storage/template/contract_template.docx');
+                            $templateProcessor = new TemplateProcessor($templatePath);
 
-                            $outputDocxPath = storage_path("app/private/contracts/{$docxFileName}");
-                            $template->saveAs($outputDocxPath); // Save the .docx file
+                            $templateProcessor->setValue('full_name', $user->full_name ?? '');
+                            $templateProcessor->setValue('email', $user->email ?? '');
+                            $templateProcessor->setValue('phone_number', $user->phone_number ?? '');
+                            $templateProcessor->setValue('address', $address);
+                            $templateProcessor->setValue('city', $city);
+                            $templateProcessor->setValue('service', $service);
+                            $templateProcessor->setValue('registration', $Registration);
+                            $templateProcessor->setValue('job_offer_letter_amount', $On_Receiving_job_Offer_Letter_Amount);
+                            $templateProcessor->setValue('work_permit_amount', $On_Receiving_Work_Permit_Amount);
+                            $templateProcessor->setValue('embassy_appointment_amount', $On_Receiving_Embassy_Appointment);
+                            $templateProcessor->setValue('after_visa_amount', $After_Visa_Amount);
+                            $templateProcessor->setValue('contract_amount', $Contract_Amount);
+                            $templateProcessor->setValue('flight_ticket', $Flight_Ticket);
+                            $templateProcessor->setValue('date', $lri . $date . $pdi);
+                            $templateProcessor->setValue('contract_no', $lri . $contract_no . $pdi);
 
-                            // Convert to PDF
-                            $pdfPath = storage_path('app/private/contracts');
-                            $pdfFileName = basename($outputDocxPath, '.docx') . '.pdf';
-                            $pdfFullPath = $pdfPath . '/' . $pdfFileName;
+                            // Save filled DOCX temporarily
+                            $docxPath = storage_path('app/private/contracts/' . $docxFileName);
+                            $templateProcessor->saveAs($docxPath);
 
-                            // putenv("HOME=/var/www");
+                            // Fix DOCX for LibreOffice PDF compatibility:
+                            // 1. Replace missing fonts (Calibri/MS Sans Serif) with Arial
+                            // 2. Remove trailing empty paragraphs that cause extra blank page
+                            $zip = new \ZipArchive();
+                            if ($zip->open($docxPath) === true) {
+                                $fontReplacements = [
+                                    'Microsoft Sans Serif' => 'Arial',
+                                    'Calibri' => 'Arial',
+                                    'Barlow-SemiBold' => 'Arial',
+                                    'SimSun' => 'Arial',
+                                ];
+                                $xmlFiles = ['word/document.xml', 'word/styles.xml', 'word/fontTable.xml'];
+                                foreach ($xmlFiles as $xmlFile) {
+                                    $xml = $zip->getFromName($xmlFile);
+                                    if ($xml !== false) {
+                                        foreach ($fontReplacements as $from => $to) {
+                                            $xml = str_replace($from, $to, $xml);
+                                        }
+                                        // Remove trailing empty paragraphs and orphaned section
+                                        // break at the end of document.xml that cause an extra
+                                        // blank page in LibreOffice
+                                        if ($xmlFile === 'word/document.xml') {
+                                            // Remove empty BodyText paragraphs before final section
+                                            $xml = preg_replace(
+                                                '/(<\/w:p>)(<w:p [^>]*><w:pPr><w:pStyle w:val="BodyText"\/><w:bidi\/>[^<]*(?:<(?!w:t[ >\/])[^>]*>[^<]*)*<\/w:pPr><\/w:p>)+(<w:sectPr )/s',
+                                                '$1$3',
+                                                $xml
+                                            );
+                                            // Remove the trailing continuous section break that
+                                            // creates a blank page (different margins/columns)
+                                            $xml = preg_replace(
+                                                '/<w:sectPr [^>]*><w:type w:val="continuous"\/>.*?<\/w:sectPr>(<\/w:body>)/s',
+                                                '$1',
+                                                $xml
+                                            );
+                                        }
+                                        $zip->addFromString($xmlFile, $xml);
+                                    }
+                                }
+                                $zip->close();
+                            }
 
-                            // $libreoffice = '/usr/bin/libreoffice'; // Or use '/usr/bin/soffice'
-                            // $command = "$libreoffice --headless --convert-to pdf --outdir " . escapeshellarg($pdfPath) . " " . escapeshellarg($outputDocxPath);
+                            // Convert DOCX to PDF using LibreOffice
+                            $pdfOutputDir = storage_path('app/private/contracts');
+                            $command = 'HOME=/var/www libreoffice --headless --norestore --convert-to pdf --outdir ' . escapeshellarg($pdfOutputDir) . ' ' . escapeshellarg($docxPath) . ' 2>&1';
+                            exec($command, $output, $returnCode);
 
-                            // // Log and execute command
-                            // \Log::info("Running command: " . $command);
-                            // exec($command, $output, $resultCode);
-                            // \Log::info('LibreOffice Output: ' . implode("\n", $output));
-                            // \Log::info('LibreOffice Exit Code: ' . $resultCode);
+                            $pdfPath = $pdfOutputDir . '/' . $fileBaseName . '.pdf';
 
-                            // //Check if PDF is generated
-                            // if ($resultCode === 0 && file_exists($pdfFullPath)) {
-                            //     // Delete the DOCX file after conversion
-                            //     if (file_exists($outputDocxPath)) {
-                            //         unlink($outputDocxPath);
-                            //         \Log::info("Deleted DOCX file: " . $outputDocxPath);
-                            //     }
+                            if ($returnCode === 0 && file_exists($pdfPath)) {
+                                // PDF created successfully, remove the temp DOCX
+                                @unlink($docxPath);
 
-                            // } else {
-                            //     \Log::error("PDF NOT GENERATED at " . $pdfFullPath);
-                            // }
-                            // ensure HOME is set (fixes permission/temp issues)
-putenv("HOME=/tmp");
+                                Contract::updateOrCreate(
+                                    ['customer_id' => $user->id],
+                                    [
+                                        'file_path'       => 'contracts/' . $pdfFileName,
+                                        'employee_id'     => auth()->id(),
+                                        'contract_number' => $newContractNumber,
+                                    ]
+                                );
 
-// use soffice (recommended)
-$soffice = '/usr/bin/soffice';
+                                Notification::make()
+                                    ->title('Contract created successfully as PDF')
+                                    ->success()
+                                    ->send();
+                            } else {
+                                // Fallback: keep the DOCX if PDF conversion fails
+                                Contract::updateOrCreate(
+                                    ['customer_id' => $user->id],
+                                    [
+                                        'file_path'       => 'contracts/' . $docxFileName,
+                                        'employee_id'     => auth()->id(),
+                                        'contract_number' => $newContractNumber,
+                                    ]
+                                );
 
-$command = "$soffice --headless --nologo --nolockcheck --nodefault --norestore "
-    . "--convert-to pdf --outdir "
-    . escapeshellarg($pdfPath) . " "
-    . escapeshellarg($outputDocxPath);
-
-// Log & execute
-\Log::info("Running command: " . $command);
-exec($command, $output, $resultCode);
-\Log::info('LibreOffice Output: ' . implode("\n", $output));
-\Log::info('LibreOffice Exit Code: ' . $resultCode);
-
-// Check result
-if ($resultCode === 0 && file_exists($pdfFullPath)) {
-    // Delete DOCX after success
-    unlink($outputDocxPath);
-    \Log::info("PDF generated successfully: " . $pdfFullPath);
-} else {
-    \Log::error("PDF NOT GENERATED at " . $pdfFullPath);
-}
-
-                          //  Optional: flash notification or log
-                            Notification::make()
-                                ->title('Contract created successfully')
-                                ->success()
-                                ->send();
+                                Notification::make()
+                                    ->title('Contract created as DOCX (PDF conversion failed)')
+                                    ->warning()
+                                    ->send();
+                            }
                         })->visible(function ($record) {
                             return !Contract::where('customer_id', $record->id)->exists();
                         }),

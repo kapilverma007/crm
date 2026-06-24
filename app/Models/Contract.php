@@ -15,6 +15,15 @@ class Contract extends Model
         'contract_number'
     ];
 
+    protected static function booted(): void
+    {
+        static::created(function (Contract $contract) {
+            ProcessUpdate::firstOrCreate(
+                ['customer_id' => $contract->customer_id]
+            );
+        });
+    }
+
     public function customer(){
         return $this->belongsTo(Customer::class);
     }

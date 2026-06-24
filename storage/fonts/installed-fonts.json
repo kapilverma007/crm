@@ -1,0 +1,8 @@
+{
+    "notonaskharabic": {
+        "normal": "\/var\/www\/html\/crm\/storage\/fonts\/NotoNaskhArabic-Regular",
+        "bold": "\/var\/www\/html\/crm\/storage\/fonts\/NotoNaskhArabic-Bold",
+        "italic": "\/var\/www\/html\/crm\/storage\/fonts\/NotoNaskhArabic-Regular",
+        "bold_italic": "\/var\/www\/html\/crm\/storage\/fonts\/NotoNaskhArabic-Bold"
+    }
+}

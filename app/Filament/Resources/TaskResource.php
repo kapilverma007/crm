@@ -94,7 +94,9 @@ class TaskResource extends Resource
             ->label('Creation Date'),
         Tables\Columns\TextColumn::make('due_date')
              ->dateTime('d M Y h:i A')
-            ->sortable(),
+            ->sortable()
+            ->color(fn (Task $record) => (!$record->is_completed && $record->due_date && $record->due_date < now()) ? 'danger' : null)
+            ->description(fn (Task $record) => (!$record->is_completed && $record->due_date && $record->due_date < now()) ? 'Overdue' : null),
         Tables\Columns\IconColumn::make('is_completed')
             ->boolean(),
      
@@ -131,14 +133,15 @@ class TaskResource extends Resource
 ->defaultSort(function ($query) {
     return $query
         ->orderByRaw("
-            CASE 
+            CASE
+                WHEN due_date IS NOT NULL AND due_date < NOW() AND is_completed = 0 THEN 1
                 WHEN due_date IS NULL THEN 4
-                WHEN due_date >= CURDATE() AND MONTH(due_date) = MONTH(CURDATE()) AND YEAR(due_date) = YEAR(CURDATE()) THEN 1
-                WHEN due_date > CURDATE() THEN 2
-                ELSE 3
+                WHEN due_date >= CURDATE() AND MONTH(due_date) = MONTH(CURDATE()) AND YEAR(due_date) = YEAR(CURDATE()) THEN 2
+                WHEN due_date > CURDATE() THEN 3
+                ELSE 4
             END
         ")
-        ->orderBy('due_date', 'asc') // earliest first within each group
+        ->orderBy('due_date', 'asc')
         ->orderBy('id', 'desc');
 });
     }

@@ -54,9 +54,20 @@ public function getTabs(): array
     $tabs = [];
 
     if (auth()->user()->isAdmin()) {
-        // Admin: Show all tasks
+        // Admin: Show all tasks (exclude overdue incomplete)
         $tabs[] = Tab::make('All Tasks')
-            ->badge(Task::count());
+            ->badge(Task::where(function ($q) {
+                $q->where('is_completed', true)
+                  ->orWhereNull('due_date')
+                  ->orWhere('due_date', '>=', now());
+            })->count())
+            ->modifyQueryUsing(function ($query) {
+                return $query->where(function ($q) {
+                    $q->where('is_completed', true)
+                      ->orWhereNull('due_date')
+                      ->orWhere('due_date', '>=', now());
+                });
+            });
 
         $tabs[] = Tab::make('Completed Tasks')
             ->badge(Task::where('is_completed', true)->count())
@@ -70,11 +81,20 @@ public function getTabs(): array
                 return $query->where('is_completed', false);
             });
     } else {
-        // Non-admin: Show only their own tasks
+        // Non-admin: Show only their own tasks (exclude overdue incomplete)
         $tabs[] = Tab::make('My Tasks')
-            ->badge(Task::where('user_id', auth()->id())->count())
+            ->badge(Task::where('user_id', auth()->id())->where(function ($q) {
+                $q->where('is_completed', true)
+                  ->orWhereNull('due_date')
+                  ->orWhere('due_date', '>=', now());
+            })->count())
             ->modifyQueryUsing(function ($query) {
-                return $query->where('user_id', auth()->id());
+                return $query->where('user_id', auth()->id())
+                             ->where(function ($q) {
+                                 $q->where('is_completed', true)
+                                   ->orWhereNull('due_date')
+                                   ->orWhere('due_date', '>=', now());
+                             });
             });
 
         $tabs[] = Tab::make('Completed Tasks')

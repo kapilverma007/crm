@@ -115,4 +115,8 @@ public function getCustomFieldMap(): array
 public function customerContractField(){
     return $this->hasOne(CustomerContractField::class);
 }
+public function processUpdate()
+{
+    return $this->hasOne(ProcessUpdate::class);
+}
 }

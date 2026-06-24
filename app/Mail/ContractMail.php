@@ -63,10 +63,16 @@ class ContractMail extends Mailable
         return [];
     }
 
+    $extension = pathinfo($path, PATHINFO_EXTENSION);
+    $filename = 'Contract.' . $extension;
+    $mime = $extension === 'docx'
+        ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        : 'application/pdf';
+
     return [
         Attachment::fromPath(Storage::disk('local')->path($path))
-            ->as('Contract.pdf')
-            ->withMime('application/pdf'),
+            ->as($filename)
+            ->withMime($mime),
     ];
 }
 }

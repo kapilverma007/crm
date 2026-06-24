@@ -79,6 +79,9 @@ class ContractResource extends Resource
                      ->badge()
                     ->color(Color::Blue),
                 Tables\Columns\TextColumn::make('comments')->searchable(),
+                Tables\Columns\TextColumn::make('contract_number')
+    ->formatStateUsing(fn ($state) => 'FC' . $state)
+    ->searchable(),
                 Tables\Columns\TextColumn::make('employee.name')
                     ->numeric()
                     ->sortable(),
