@@ -174,6 +174,10 @@ class ProcessUpdateResource extends Resource
                 Tables\Columns\TextColumn::make('customer.contracts.contract_number')
                     ->label('Contract No')
                     ->formatStateUsing(fn ($state) => $state ? 'FC' . $state : '-'),
+                Tables\Columns\TextColumn::make('customer.contracts.created_at')
+                    ->label('Contract Date')
+                    ->dateTime('d M Y')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('customer.employee.name')
                     ->label('Employee')
                     ->searchable(),
@@ -212,6 +216,21 @@ class ProcessUpdateResource extends Resource
                 Tables\Columns\ToggleColumn::make('stage5_payment')
                     ->label('S5 Pay')
                     ->disabled(!$isAdmin),
+
+                Tables\Columns\TextColumn::make('total_amount')
+                    ->label('Total Amount')
+                    ->getStateUsing(function (ProcessUpdate $record) {
+                        $total = 0;
+                        foreach (['stage1_entries', 'stage2_entries', 'stage3_entries', 'stage4_entries', 'stage5_entries'] as $field) {
+                            $entries = $record->$field;
+                            if (is_array($entries)) {
+                                foreach ($entries as $entry) {
+                                    $total += (float) ($entry['amount'] ?? 0);
+                                }
+                            }
+                        }
+                        return number_format($total, 2);
+                    }),
 
                 Tables\Columns\TextColumn::make('updated_at')
                     ->label('Last Updated')
