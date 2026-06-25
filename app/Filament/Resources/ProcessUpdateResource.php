@@ -49,10 +49,18 @@ class ProcessUpdateResource extends Resource
                         Forms\Components\Toggle::make('stage1_payment')
                             ->label('Payment')
                             ->disabled(!$isAdmin),
-                        Forms\Components\DatePicker::make('stage1_date')
-                            ->label('Date')
-                            ->disabled(!$isAdmin),
-                    ])->columns(3),
+                        Forms\Components\Repeater::make('stage1_entries')
+                            ->label('Payment Entries')
+                            ->schema([
+                                Forms\Components\DatePicker::make('date')->label('Date')->required(),
+                                Forms\Components\TextInput::make('amount')->label('Amount')->numeric()->required(),
+                            ])
+                            ->columns(2)
+                            ->disabled(!$isAdmin)
+                            ->defaultItems(0)
+                            ->addActionLabel('Add More')
+                            ->columnSpanFull(),
+                    ])->columns(2),
 
                 Forms\Components\Section::make('Stage 2 - JOL (Job Offer Letter)')
                     ->schema([
@@ -62,10 +70,18 @@ class ProcessUpdateResource extends Resource
                         Forms\Components\Toggle::make('stage2_payment')
                             ->label('Payment')
                             ->disabled(!$isAdmin),
-                        Forms\Components\DatePicker::make('stage2_date')
-                            ->label('Date')
-                            ->disabled(!$isAdmin),
-                    ])->columns(3),
+                        Forms\Components\Repeater::make('stage2_entries')
+                            ->label('Payment Entries')
+                            ->schema([
+                                Forms\Components\DatePicker::make('date')->label('Date')->required(),
+                                Forms\Components\TextInput::make('amount')->label('Amount')->numeric()->required(),
+                            ])
+                            ->columns(2)
+                            ->disabled(!$isAdmin)
+                            ->defaultItems(0)
+                            ->addActionLabel('Add More')
+                            ->columnSpanFull(),
+                    ])->columns(2),
 
                 Forms\Components\Section::make('Stage 3 - WP (Work Permit)')
                     ->schema([
@@ -75,10 +91,18 @@ class ProcessUpdateResource extends Resource
                         Forms\Components\Toggle::make('stage3_payment')
                             ->label('Payment')
                             ->disabled(!$isAdmin),
-                        Forms\Components\DatePicker::make('stage3_date')
-                            ->label('Date')
-                            ->disabled(!$isAdmin),
-                    ])->columns(3),
+                        Forms\Components\Repeater::make('stage3_entries')
+                            ->label('Payment Entries')
+                            ->schema([
+                                Forms\Components\DatePicker::make('date')->label('Date')->required(),
+                                Forms\Components\TextInput::make('amount')->label('Amount')->numeric()->required(),
+                            ])
+                            ->columns(2)
+                            ->disabled(!$isAdmin)
+                            ->defaultItems(0)
+                            ->addActionLabel('Add More')
+                            ->columnSpanFull(),
+                    ])->columns(2),
 
                 Forms\Components\Section::make('Stage 4 - Appointment')
                     ->schema([
@@ -88,10 +112,18 @@ class ProcessUpdateResource extends Resource
                         Forms\Components\Toggle::make('stage4_payment')
                             ->label('Payment')
                             ->disabled(!$isAdmin),
-                        Forms\Components\DatePicker::make('stage4_date')
-                            ->label('Date')
-                            ->disabled(!$isAdmin),
-                    ])->columns(3),
+                        Forms\Components\Repeater::make('stage4_entries')
+                            ->label('Payment Entries')
+                            ->schema([
+                                Forms\Components\DatePicker::make('date')->label('Date')->required(),
+                                Forms\Components\TextInput::make('amount')->label('Amount')->numeric()->required(),
+                            ])
+                            ->columns(2)
+                            ->disabled(!$isAdmin)
+                            ->defaultItems(0)
+                            ->addActionLabel('Add More')
+                            ->columnSpanFull(),
+                    ])->columns(2),
 
                 Forms\Components\Section::make('Stage 5 - Visa')
                     ->schema([
@@ -101,10 +133,18 @@ class ProcessUpdateResource extends Resource
                         Forms\Components\Toggle::make('stage5_payment')
                             ->label('Payment')
                             ->disabled(!$isAdmin),
-                        Forms\Components\DatePicker::make('stage5_date')
-                            ->label('Date')
-                            ->disabled(!$isAdmin),
-                    ])->columns(3),
+                        Forms\Components\Repeater::make('stage5_entries')
+                            ->label('Payment Entries')
+                            ->schema([
+                                Forms\Components\DatePicker::make('date')->label('Date')->required(),
+                                Forms\Components\TextInput::make('amount')->label('Amount')->numeric()->required(),
+                            ])
+                            ->columns(2)
+                            ->disabled(!$isAdmin)
+                            ->defaultItems(0)
+                            ->addActionLabel('Add More')
+                            ->columnSpanFull(),
+                    ])->columns(2),
             ]);
     }
 
@@ -124,6 +164,9 @@ class ProcessUpdateResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('customer.full_name')
                     ->label('Customer Name')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('customer.phone_number')
+                    ->label('Phone')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('customer.email')
                     ->label('Email')
@@ -189,32 +232,77 @@ class ProcessUpdateResource extends Resource
                             ->schema([
                                 Forms\Components\Toggle::make('stage1_registration')->label('Registration'),
                                 Forms\Components\Toggle::make('stage1_payment')->label('Payment'),
-                                Forms\Components\DatePicker::make('stage1_date')->label('Date'),
-                            ])->columns(3),
+                                Forms\Components\Repeater::make('stage1_entries')
+                                    ->label('Payment Entries')
+                                    ->schema([
+                                        Forms\Components\DatePicker::make('date')->label('Date')->required(),
+                                        Forms\Components\TextInput::make('amount')->label('Amount')->numeric()->required(),
+                                    ])
+                                    ->columns(2)
+                                    ->defaultItems(0)
+                                    ->addActionLabel('Add More')
+                                    ->columnSpanFull(),
+                            ])->columns(2),
                         Forms\Components\Section::make('Stage 2 - JOL')
                             ->schema([
                                 Forms\Components\Toggle::make('stage2_jol')->label('JOL'),
                                 Forms\Components\Toggle::make('stage2_payment')->label('Payment'),
-                                Forms\Components\DatePicker::make('stage2_date')->label('Date'),
-                            ])->columns(3),
+                                Forms\Components\Repeater::make('stage2_entries')
+                                    ->label('Payment Entries')
+                                    ->schema([
+                                        Forms\Components\DatePicker::make('date')->label('Date')->required(),
+                                        Forms\Components\TextInput::make('amount')->label('Amount')->numeric()->required(),
+                                    ])
+                                    ->columns(2)
+                                    ->defaultItems(0)
+                                    ->addActionLabel('Add More')
+                                    ->columnSpanFull(),
+                            ])->columns(2),
                         Forms\Components\Section::make('Stage 3 - Work Permit')
                             ->schema([
                                 Forms\Components\Toggle::make('stage3_wp')->label('Work Permit'),
                                 Forms\Components\Toggle::make('stage3_payment')->label('Payment'),
-                                Forms\Components\DatePicker::make('stage3_date')->label('Date'),
-                            ])->columns(3),
+                                Forms\Components\Repeater::make('stage3_entries')
+                                    ->label('Payment Entries')
+                                    ->schema([
+                                        Forms\Components\DatePicker::make('date')->label('Date')->required(),
+                                        Forms\Components\TextInput::make('amount')->label('Amount')->numeric()->required(),
+                                    ])
+                                    ->columns(2)
+                                    ->defaultItems(0)
+                                    ->addActionLabel('Add More')
+                                    ->columnSpanFull(),
+                            ])->columns(2),
                         Forms\Components\Section::make('Stage 4 - Appointment')
                             ->schema([
                                 Forms\Components\Toggle::make('stage4_appointment')->label('Appointment'),
                                 Forms\Components\Toggle::make('stage4_payment')->label('Payment'),
-                                Forms\Components\DatePicker::make('stage4_date')->label('Date'),
-                            ])->columns(3),
+                                Forms\Components\Repeater::make('stage4_entries')
+                                    ->label('Payment Entries')
+                                    ->schema([
+                                        Forms\Components\DatePicker::make('date')->label('Date')->required(),
+                                        Forms\Components\TextInput::make('amount')->label('Amount')->numeric()->required(),
+                                    ])
+                                    ->columns(2)
+                                    ->defaultItems(0)
+                                    ->addActionLabel('Add More')
+                                    ->columnSpanFull(),
+                            ])->columns(2),
                         Forms\Components\Section::make('Stage 5 - Visa')
                             ->schema([
                                 Forms\Components\Toggle::make('stage5_visa')->label('Visa'),
                                 Forms\Components\Toggle::make('stage5_payment')->label('Payment'),
-                                Forms\Components\DatePicker::make('stage5_date')->label('Date'),
-                            ])->columns(3),
+                                Forms\Components\Repeater::make('stage5_entries')
+                                    ->label('Payment Entries')
+                                    ->schema([
+                                        Forms\Components\DatePicker::make('date')->label('Date')->required(),
+                                        Forms\Components\TextInput::make('amount')->label('Amount')->numeric()->required(),
+                                    ])
+                                    ->columns(2)
+                                    ->defaultItems(0)
+                                    ->addActionLabel('Add More')
+                                    ->columnSpanFull(),
+                            ])->columns(2),
                     ])
                     ->action(function (ProcessUpdate $record, array $data) {
                         $record->update($data);
@@ -237,18 +325,23 @@ class ProcessUpdateResource extends Resource
                             'stage1_registration' => false,
                             'stage1_payment' => false,
                             'stage1_date' => null,
+                            'stage1_entries' => null,
                             'stage2_jol' => false,
                             'stage2_payment' => false,
                             'stage2_date' => null,
+                            'stage2_entries' => null,
                             'stage3_wp' => false,
                             'stage3_payment' => false,
                             'stage3_date' => null,
+                            'stage3_entries' => null,
                             'stage4_appointment' => false,
                             'stage4_payment' => false,
                             'stage4_date' => null,
+                            'stage4_entries' => null,
                             'stage5_visa' => false,
                             'stage5_payment' => false,
                             'stage5_date' => null,
+                            'stage5_entries' => null,
                         ]);
 
                         Notification::make()

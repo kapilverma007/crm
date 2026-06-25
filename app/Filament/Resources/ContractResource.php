@@ -71,7 +71,10 @@ class ContractResource extends Resource
                         return $record->customer->full_name;
                     })
                     ->searchable(['full_name'])->label('Customer Name'),
-                       Tables\Columns\TextColumn::make('customer.email')->searchable()->label('Customer Email'),
+                Tables\Columns\TextColumn::make('customer.phone_number')
+                    ->searchable()
+                    ->label('Phone'),
+                Tables\Columns\TextColumn::make('customer.email')->searchable()->label('Customer Email'),
                 Tables\Columns\TextColumn::make('file_path')
                 ->label('Contract')
                     ->formatStateUsing(fn() => "Download Contract")
