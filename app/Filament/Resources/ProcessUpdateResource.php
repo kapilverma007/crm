@@ -10,6 +10,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Notifications\Notification;
+use App\Models\CustomerContractField;
 use Illuminate\Database\Eloquent\Builder;
 
 class ProcessUpdateResource extends Resource
@@ -54,8 +55,9 @@ class ProcessUpdateResource extends Resource
                             ->schema([
                                 Forms\Components\DatePicker::make('date')->label('Date')->required(),
                                 Forms\Components\TextInput::make('amount')->label('Amount')->numeric()->required(),
+                                Forms\Components\Select::make('payment_mode')->label('Payment Mode')->options(['BT' => 'BT', 'Ryd Cash' => 'Ryd Cash', 'Jedcash' => 'Jedcash'])->required(),
                             ])
-                            ->columns(2)
+                            ->columns(3)
                             ->disabled(!$isAdmin)
                             ->defaultItems(0)
                             ->addActionLabel('Add More')
@@ -75,8 +77,9 @@ class ProcessUpdateResource extends Resource
                             ->schema([
                                 Forms\Components\DatePicker::make('date')->label('Date')->required(),
                                 Forms\Components\TextInput::make('amount')->label('Amount')->numeric()->required(),
+                                Forms\Components\Select::make('payment_mode')->label('Payment Mode')->options(['BT' => 'BT', 'Ryd Cash' => 'Ryd Cash', 'Jedcash' => 'Jedcash'])->required(),
                             ])
-                            ->columns(2)
+                            ->columns(3)
                             ->disabled(!$isAdmin)
                             ->defaultItems(0)
                             ->addActionLabel('Add More')
@@ -96,8 +99,9 @@ class ProcessUpdateResource extends Resource
                             ->schema([
                                 Forms\Components\DatePicker::make('date')->label('Date')->required(),
                                 Forms\Components\TextInput::make('amount')->label('Amount')->numeric()->required(),
+                                Forms\Components\Select::make('payment_mode')->label('Payment Mode')->options(['BT' => 'BT', 'Ryd Cash' => 'Ryd Cash', 'Jedcash' => 'Jedcash'])->required(),
                             ])
-                            ->columns(2)
+                            ->columns(3)
                             ->disabled(!$isAdmin)
                             ->defaultItems(0)
                             ->addActionLabel('Add More')
@@ -117,8 +121,9 @@ class ProcessUpdateResource extends Resource
                             ->schema([
                                 Forms\Components\DatePicker::make('date')->label('Date')->required(),
                                 Forms\Components\TextInput::make('amount')->label('Amount')->numeric()->required(),
+                                Forms\Components\Select::make('payment_mode')->label('Payment Mode')->options(['BT' => 'BT', 'Ryd Cash' => 'Ryd Cash', 'Jedcash' => 'Jedcash'])->required(),
                             ])
-                            ->columns(2)
+                            ->columns(3)
                             ->disabled(!$isAdmin)
                             ->defaultItems(0)
                             ->addActionLabel('Add More')
@@ -138,8 +143,9 @@ class ProcessUpdateResource extends Resource
                             ->schema([
                                 Forms\Components\DatePicker::make('date')->label('Date')->required(),
                                 Forms\Components\TextInput::make('amount')->label('Amount')->numeric()->required(),
+                                Forms\Components\Select::make('payment_mode')->label('Payment Mode')->options(['BT' => 'BT', 'Ryd Cash' => 'Ryd Cash', 'Jedcash' => 'Jedcash'])->required(),
                             ])
-                            ->columns(2)
+                            ->columns(3)
                             ->disabled(!$isAdmin)
                             ->defaultItems(0)
                             ->addActionLabel('Add More')
@@ -154,7 +160,7 @@ class ProcessUpdateResource extends Resource
 
         return $table
             ->modifyQueryUsing(function (Builder $query) {
-                $query->with(['customer.employee', 'customer.contracts']);
+                $query->with(['customer.employee', 'customer.contracts', 'customer.customerContractField']);
                 if (!auth()->user()->isAdmin()) {
                     $query->whereHas('customer', function ($q) {
                         $q->where('employee_id', auth()->id());
@@ -217,20 +223,40 @@ class ProcessUpdateResource extends Resource
                     ->label('S5 Pay')
                     ->disabled(!$isAdmin),
 
-                Tables\Columns\TextColumn::make('total_amount')
-                    ->label('Total Amount')
+                Tables\Columns\TextColumn::make('total_contract_amount')
+                    ->label('Total Contract')
+                    ->getStateUsing(fn (ProcessUpdate $record) => number_format((float) ($record->customer?->customerContractField?->total_contract_amount ?? 0), 2)),
+
+                Tables\Columns\TextColumn::make('total_paid_amount')
+                    ->label('Total Paid')
                     ->getStateUsing(function (ProcessUpdate $record) {
                         $total = 0;
                         foreach (['stage1_entries', 'stage2_entries', 'stage3_entries', 'stage4_entries', 'stage5_entries'] as $field) {
-                            $entries = $record->$field;
-                            if (is_array($entries)) {
-                                foreach ($entries as $entry) {
-                                    $total += (float) ($entry['amount'] ?? 0);
-                                }
+                            foreach ($record->$field ?? [] as $entry) {
+                                $total += (float) ($entry['amount'] ?? 0);
                             }
                         }
                         return number_format($total, 2);
                     }),
+
+                Tables\Columns\TextColumn::make('balance_amount')
+                    ->label('Balance')
+                    ->getStateUsing(function (ProcessUpdate $record) {
+                        $contract = (float) ($record->customer?->customerContractField?->total_contract_amount ?? 0);
+                        $paid = 0;
+                        foreach (['stage1_entries', 'stage2_entries', 'stage3_entries', 'stage4_entries', 'stage5_entries'] as $field) {
+                            foreach ($record->$field ?? [] as $entry) {
+                                $paid += (float) ($entry['amount'] ?? 0);
+                            }
+                        }
+                        return number_format($contract - $paid, 2);
+                    })
+                    ->color(fn (ProcessUpdate $record): string => (
+                        ((float) ($record->customer?->customerContractField?->total_contract_amount ?? 0)) -
+                        collect(['stage1_entries','stage2_entries','stage3_entries','stage4_entries','stage5_entries'])
+                            ->flatMap(fn ($f) => $record->$f ?? [])
+                            ->sum(fn ($e) => (float) ($e['amount'] ?? 0))
+                    ) > 0 ? 'danger' : 'success'),
 
                 Tables\Columns\TextColumn::make('updated_at')
                     ->label('Last Updated')
@@ -245,8 +271,19 @@ class ProcessUpdateResource extends Resource
                     ->label('Update')
                     ->icon('heroicon-m-pencil-square')
                     ->visible($isAdmin)
-                    ->fillForm(fn (ProcessUpdate $record): array => $record->toArray())
+                    ->fillForm(fn (ProcessUpdate $record): array => array_merge(
+                        $record->toArray(),
+                        ['total_contract_amount' => $record->customer?->customerContractField?->total_contract_amount]
+                    ))
                     ->form([
+                        Forms\Components\Section::make('Contract Amount')
+                            ->schema([
+                                Forms\Components\TextInput::make('total_contract_amount')
+                                    ->label('Total Contract Amount')
+                                    ->numeric()
+                                    ->prefix('SAR')
+                                    ->columnSpanFull(),
+                            ]),
                         Forms\Components\Section::make('Stage 1 - Registration')
                             ->schema([
                                 Forms\Components\Toggle::make('stage1_registration')->label('Registration'),
@@ -256,8 +293,9 @@ class ProcessUpdateResource extends Resource
                                     ->schema([
                                         Forms\Components\DatePicker::make('date')->label('Date')->required(),
                                         Forms\Components\TextInput::make('amount')->label('Amount')->numeric()->required(),
+                                        Forms\Components\Select::make('payment_mode')->label('Payment Mode')->options(['BT' => 'BT', 'Ryd Cash' => 'Ryd Cash', 'Jedcash' => 'Jedcash'])->required(),
                                     ])
-                                    ->columns(2)
+                                    ->columns(3)
                                     ->defaultItems(0)
                                     ->addActionLabel('Add More')
                                     ->columnSpanFull(),
@@ -271,8 +309,9 @@ class ProcessUpdateResource extends Resource
                                     ->schema([
                                         Forms\Components\DatePicker::make('date')->label('Date')->required(),
                                         Forms\Components\TextInput::make('amount')->label('Amount')->numeric()->required(),
+                                        Forms\Components\Select::make('payment_mode')->label('Payment Mode')->options(['BT' => 'BT', 'Ryd Cash' => 'Ryd Cash', 'Jedcash' => 'Jedcash'])->required(),
                                     ])
-                                    ->columns(2)
+                                    ->columns(3)
                                     ->defaultItems(0)
                                     ->addActionLabel('Add More')
                                     ->columnSpanFull(),
@@ -286,8 +325,9 @@ class ProcessUpdateResource extends Resource
                                     ->schema([
                                         Forms\Components\DatePicker::make('date')->label('Date')->required(),
                                         Forms\Components\TextInput::make('amount')->label('Amount')->numeric()->required(),
+                                        Forms\Components\Select::make('payment_mode')->label('Payment Mode')->options(['BT' => 'BT', 'Ryd Cash' => 'Ryd Cash', 'Jedcash' => 'Jedcash'])->required(),
                                     ])
-                                    ->columns(2)
+                                    ->columns(3)
                                     ->defaultItems(0)
                                     ->addActionLabel('Add More')
                                     ->columnSpanFull(),
@@ -301,8 +341,9 @@ class ProcessUpdateResource extends Resource
                                     ->schema([
                                         Forms\Components\DatePicker::make('date')->label('Date')->required(),
                                         Forms\Components\TextInput::make('amount')->label('Amount')->numeric()->required(),
+                                        Forms\Components\Select::make('payment_mode')->label('Payment Mode')->options(['BT' => 'BT', 'Ryd Cash' => 'Ryd Cash', 'Jedcash' => 'Jedcash'])->required(),
                                     ])
-                                    ->columns(2)
+                                    ->columns(3)
                                     ->defaultItems(0)
                                     ->addActionLabel('Add More')
                                     ->columnSpanFull(),
@@ -316,14 +357,22 @@ class ProcessUpdateResource extends Resource
                                     ->schema([
                                         Forms\Components\DatePicker::make('date')->label('Date')->required(),
                                         Forms\Components\TextInput::make('amount')->label('Amount')->numeric()->required(),
+                                        Forms\Components\Select::make('payment_mode')->label('Payment Mode')->options(['BT' => 'BT', 'Ryd Cash' => 'Ryd Cash', 'Jedcash' => 'Jedcash'])->required(),
                                     ])
-                                    ->columns(2)
+                                    ->columns(3)
                                     ->defaultItems(0)
                                     ->addActionLabel('Add More')
                                     ->columnSpanFull(),
                             ])->columns(2),
                     ])
                     ->action(function (ProcessUpdate $record, array $data) {
+                        if (isset($data['total_contract_amount'])) {
+                            CustomerContractField::updateOrCreate(
+                                ['customer_id' => $record->customer_id],
+                                ['total_contract_amount' => $data['total_contract_amount']]
+                            );
+                        }
+                        unset($data['total_contract_amount']);
                         $record->update($data);
                         Notification::make()
                             ->title('Process updated successfully')
