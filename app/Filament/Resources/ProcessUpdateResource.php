@@ -53,7 +53,7 @@ class ProcessUpdateResource extends Resource
                         Forms\Components\Repeater::make('stage1_entries')
                             ->label('Payment Entries')
                             ->schema([
-                                Forms\Components\DatePicker::make('date')->label('Date')->required(),
+                                Forms\Components\DatePicker::make('date')->label('Date')->displayFormat('d M Y')->required(),
                                 Forms\Components\TextInput::make('amount')->label('Amount')->numeric()->required(),
                                 Forms\Components\Select::make('payment_mode')->label('Payment Mode')->options(['BT' => 'BT', 'Ryd Cash' => 'Ryd Cash', 'Jedcash' => 'Jedcash'])->required(),
                             ])
@@ -75,7 +75,7 @@ class ProcessUpdateResource extends Resource
                         Forms\Components\Repeater::make('stage2_entries')
                             ->label('Payment Entries')
                             ->schema([
-                                Forms\Components\DatePicker::make('date')->label('Date')->required(),
+                                Forms\Components\DatePicker::make('date')->label('Date')->displayFormat('d M Y')->required(),
                                 Forms\Components\TextInput::make('amount')->label('Amount')->numeric()->required(),
                                 Forms\Components\Select::make('payment_mode')->label('Payment Mode')->options(['BT' => 'BT', 'Ryd Cash' => 'Ryd Cash', 'Jedcash' => 'Jedcash'])->required(),
                             ])
@@ -97,7 +97,7 @@ class ProcessUpdateResource extends Resource
                         Forms\Components\Repeater::make('stage3_entries')
                             ->label('Payment Entries')
                             ->schema([
-                                Forms\Components\DatePicker::make('date')->label('Date')->required(),
+                                Forms\Components\DatePicker::make('date')->label('Date')->displayFormat('d M Y')->required(),
                                 Forms\Components\TextInput::make('amount')->label('Amount')->numeric()->required(),
                                 Forms\Components\Select::make('payment_mode')->label('Payment Mode')->options(['BT' => 'BT', 'Ryd Cash' => 'Ryd Cash', 'Jedcash' => 'Jedcash'])->required(),
                             ])
@@ -119,7 +119,7 @@ class ProcessUpdateResource extends Resource
                         Forms\Components\Repeater::make('stage4_entries')
                             ->label('Payment Entries')
                             ->schema([
-                                Forms\Components\DatePicker::make('date')->label('Date')->required(),
+                                Forms\Components\DatePicker::make('date')->label('Date')->displayFormat('d M Y')->required(),
                                 Forms\Components\TextInput::make('amount')->label('Amount')->numeric()->required(),
                                 Forms\Components\Select::make('payment_mode')->label('Payment Mode')->options(['BT' => 'BT', 'Ryd Cash' => 'Ryd Cash', 'Jedcash' => 'Jedcash'])->required(),
                             ])
@@ -141,7 +141,7 @@ class ProcessUpdateResource extends Resource
                         Forms\Components\Repeater::make('stage5_entries')
                             ->label('Payment Entries')
                             ->schema([
-                                Forms\Components\DatePicker::make('date')->label('Date')->required(),
+                                Forms\Components\DatePicker::make('date')->label('Date')->displayFormat('d M Y')->required(),
                                 Forms\Components\TextInput::make('amount')->label('Amount')->numeric()->required(),
                                 Forms\Components\Select::make('payment_mode')->label('Payment Mode')->options(['BT' => 'BT', 'Ryd Cash' => 'Ryd Cash', 'Jedcash' => 'Jedcash'])->required(),
                             ])
@@ -291,7 +291,7 @@ class ProcessUpdateResource extends Resource
                                 Forms\Components\Repeater::make('stage1_entries')
                                     ->label('Payment Entries')
                                     ->schema([
-                                        Forms\Components\DatePicker::make('date')->label('Date')->required(),
+                                        Forms\Components\DatePicker::make('date')->label('Date')->displayFormat('d M Y')->required(),
                                         Forms\Components\TextInput::make('amount')->label('Amount')->numeric()->required(),
                                         Forms\Components\Select::make('payment_mode')->label('Payment Mode')->options(['BT' => 'BT', 'Ryd Cash' => 'Ryd Cash', 'Jedcash' => 'Jedcash'])->required(),
                                     ])
@@ -307,7 +307,7 @@ class ProcessUpdateResource extends Resource
                                 Forms\Components\Repeater::make('stage2_entries')
                                     ->label('Payment Entries')
                                     ->schema([
-                                        Forms\Components\DatePicker::make('date')->label('Date')->required(),
+                                        Forms\Components\DatePicker::make('date')->label('Date')->displayFormat('d M Y')->required(),
                                         Forms\Components\TextInput::make('amount')->label('Amount')->numeric()->required(),
                                         Forms\Components\Select::make('payment_mode')->label('Payment Mode')->options(['BT' => 'BT', 'Ryd Cash' => 'Ryd Cash', 'Jedcash' => 'Jedcash'])->required(),
                                     ])
@@ -323,7 +323,7 @@ class ProcessUpdateResource extends Resource
                                 Forms\Components\Repeater::make('stage3_entries')
                                     ->label('Payment Entries')
                                     ->schema([
-                                        Forms\Components\DatePicker::make('date')->label('Date')->required(),
+                                        Forms\Components\DatePicker::make('date')->label('Date')->displayFormat('d M Y')->required(),
                                         Forms\Components\TextInput::make('amount')->label('Amount')->numeric()->required(),
                                         Forms\Components\Select::make('payment_mode')->label('Payment Mode')->options(['BT' => 'BT', 'Ryd Cash' => 'Ryd Cash', 'Jedcash' => 'Jedcash'])->required(),
                                     ])
@@ -339,7 +339,7 @@ class ProcessUpdateResource extends Resource
                                 Forms\Components\Repeater::make('stage4_entries')
                                     ->label('Payment Entries')
                                     ->schema([
-                                        Forms\Components\DatePicker::make('date')->label('Date')->required(),
+                                        Forms\Components\DatePicker::make('date')->label('Date')->displayFormat('d M Y')->required(),
                                         Forms\Components\TextInput::make('amount')->label('Amount')->numeric()->required(),
                                         Forms\Components\Select::make('payment_mode')->label('Payment Mode')->options(['BT' => 'BT', 'Ryd Cash' => 'Ryd Cash', 'Jedcash' => 'Jedcash'])->required(),
                                     ])
@@ -355,7 +355,7 @@ class ProcessUpdateResource extends Resource
                                 Forms\Components\Repeater::make('stage5_entries')
                                     ->label('Payment Entries')
                                     ->schema([
-                                        Forms\Components\DatePicker::make('date')->label('Date')->required(),
+                                        Forms\Components\DatePicker::make('date')->label('Date')->displayFormat('d M Y')->required(),
                                         Forms\Components\TextInput::make('amount')->label('Amount')->numeric()->required(),
                                         Forms\Components\Select::make('payment_mode')->label('Payment Mode')->options(['BT' => 'BT', 'Ryd Cash' => 'Ryd Cash', 'Jedcash' => 'Jedcash'])->required(),
                                     ])
